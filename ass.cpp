@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <cstdio>
@@ -88,27 +89,18 @@ int main()
             i++;
         }
 
-        std::string mnemonic{line.substr(start, i - start)};
+        auto mnemonic = std::string_view{line}.substr(start, i - start);
 
-        bool match = false;
+        auto match = std::ranges::find(mnems.begin(), mnems.end(), mnemonic, &INSTR::mnem);
 
-        for (size_t k = 0; k < sizeof mnems / sizeof mnems[0]; k++)
+        if (match == mnems.end())
         {
-            if (mnems[k].mnem == mnemonic)
-            {
-                std::print(stderr, "Found matching mnemonic: {}\n", mnemonic);
-                match = true;
-                break;
-            }
+            std::println("Unknown mnemonic: {} on line {}", mnemonic, lineNr);
+
+            return 1;
         }
 
-        if (!match)
-        {
-            std::print("Unknown mnemonic: {} on line {}\n", mnemonic, lineNr);
-
-            // TODO: Decide whether to break or continue here
-            // TODO2: Return line number
-        }
+        std::println("Found matching mnemonic: {}", mnemonic);
     }
 
     return 0;
