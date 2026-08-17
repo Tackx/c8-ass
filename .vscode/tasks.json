@@ -4,14 +4,16 @@
         {
             "label": "build ass",
             "type": "process",
-            "command": "gcc",
+            "command": "g++",
             "args": [
+                "-std=c++26",
                 "-g",
                 "-Wall",
                 "-Wextra",
-                "./ass.c",
+                "./ass.cpp",
                 "-o",
-                "ass"
+                "ass",
+                "-lstdc++exp"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
