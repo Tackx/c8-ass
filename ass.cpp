@@ -1,11 +1,10 @@
-#include <fstream>
-#include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
-
 #include <array>
+#include <cstdint>
+#include <cstdio>
+#include <fstream>
 #include <print>
 #include <string>
+#include <string_view>
 
 enum class Regs
 {
@@ -61,24 +60,35 @@ int main()
     {
         size_t i = 0;
 
-        while (line[i] == ' ' || line[i] == '\t')
-        {
-            i++;
-        }
-
-        // Skip lines which are just newlines, empty or purely comments
-        if (line[i] == '\n' || line[i] == '\0' || line[i] == ';')
+        // Skip lines which are empty or purely comments
+        if (line.empty())
         {
             continue;
         }
 
-        std::string mnemonic;
-
-        while (line[i] != ' ' && line[i] != '\0' && line[i] != '\t' && line[i] != '\n')
+        if (line.back() == '\r')
         {
-            mnemonic += line[i];
+            line.pop_back();
+        }
+
+        while (i < line.length() && (line[i] == ' ' || line[i] == '\t'))
+        {
             i++;
         }
+
+        if (i == line.length() || line[i] == ';')
+        {
+            continue;
+        }
+
+        size_t start = i;
+
+        while (i < line.length() && line[i] != ' ' && line[i] != '\t')
+        {
+            i++;
+        }
+
+        std::string mnemonic{line.substr(start, i - start)};
 
         bool match = false;
 
@@ -86,7 +96,7 @@ int main()
         {
             if (mnems[k].mnem == mnemonic)
             {
-                std::print("Found matching mnemonic: {}\n", mnemonic);
+                std::print(stderr, "Found matching mnemonic: {}\n", mnemonic);
                 match = true;
                 break;
             }

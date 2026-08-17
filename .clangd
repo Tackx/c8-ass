@@ -1,2 +1,5 @@
+Diagnostics:
+  UnusedIncludes: Strict
+  MissingIncludes: Strict
 CompileFlags:
   Add: [-std=c++23]
