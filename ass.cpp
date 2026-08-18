@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <fstream>
 #include <print>
 #include <string>
@@ -44,6 +44,25 @@ constexpr std::array mnems = {
     INSTR{.mnem = "CLS", .hex = 0x00E0, .regs = Regs::NONE, .val_type = ValueType::NONE},
 };
 
+// TODO: It also needs to accept the parsed "params" obviously
+std::uint16_t encode(const INSTR& instr)
+{
+
+    auto rawHex{instr.hex};
+
+    if (instr.val_type != ValueType::NONE)
+    {
+        // TODO - take from params
+    }
+
+    if (instr.regs != Regs::NONE)
+    {
+        // TODO - take from params
+    }
+
+    return rawHex;
+}
+
 int main()
 {
     std::ifstream f{"./test.asm"};
@@ -61,7 +80,6 @@ int main()
     {
         size_t i = 0;
 
-        // Skip lines which are empty or purely comments
         if (line.empty())
         {
             continue;
@@ -91,7 +109,7 @@ int main()
 
         auto mnemonic = std::string_view{line}.substr(start, i - start);
 
-        auto match = std::ranges::find(mnems.begin(), mnems.end(), mnemonic, &INSTR::mnem);
+        auto match = std::ranges::find(mnems, mnemonic, &INSTR::mnem);
 
         if (match == mnems.end())
         {
@@ -101,6 +119,8 @@ int main()
         }
 
         std::println("Found matching mnemonic: {}", mnemonic);
+
+        encode(*match);
     }
 
     return 0;
