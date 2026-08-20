@@ -412,3 +412,4 @@ build/
 *.exe
 *.asm
 *.ch8
+compile_commands.json

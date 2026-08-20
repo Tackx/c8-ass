@@ -1,8 +1,0 @@
-[
-{
-  "directory": "C:/Users/vlkpa/Desktop/projects/c8-ass/build",
-  "command": "C:\\msys64\\mingw64\\bin\\g++.exe   -g -std=gnu++23 -o CMakeFiles\\ass.dir\\ass.cpp.obj -c C:\\Users\\vlkpa\\Desktop\\projects\\c8-ass\\ass.cpp",
-  "file": "C:/Users/vlkpa/Desktop/projects/c8-ass/ass.cpp",
-  "output": "CMakeFiles/ass.dir/ass.cpp.obj"
-}
-]
