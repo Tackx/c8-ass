@@ -21,7 +21,7 @@ enum class OperandKind
     VALUE_NNN
 };
 
-struct INSTR
+struct Instruction
 {
     std::string_view mnem;
     std::uint16_t hex;
@@ -30,14 +30,14 @@ struct INSTR
 };
 
 constexpr std::array mnems = {
-    INSTR{.mnem = "CLS", .hex = 0x00E0},
-    INSTR{.mnem = "DRW", .hex = 0xD000, .operandCount = 3, .operands = {OperandKind::REGISTER, OperandKind::REGISTER, OperandKind::VALUE_N}},
+    Instruction{.mnem = "CLS", .hex = 0x00E0},
+    Instruction{.mnem = "DRW", .hex = 0xD000, .operandCount = 3, .operands = {OperandKind::REGISTER, OperandKind::REGISTER, OperandKind::VALUE_N}},
 };
 
 std::unordered_map<std::string, uint16_t> labelMemoryMap;
 
 // TODO: Pass the line number for error messages
-std::uint16_t encode(const INSTR& instr, const std::vector<std::string_view>& rawArgs)
+std::uint16_t encode(const Instruction& instr, const std::vector<std::string_view>& rawArgs)
 {
 
     auto rawHex{instr.hex};
@@ -184,10 +184,8 @@ int firstPass(char** args)
     return 0;
 };
 
-int assemble(char** args)
+int secondPass(char** args)
 {
-    firstPass(args);
-
     std::ifstream fi{args[1]};
     if (!fi.is_open())
     {
@@ -246,7 +244,7 @@ int assemble(char** args)
             continue;
         }
 
-        auto match = std::ranges::find(mnems, token, &INSTR::mnem);
+        auto match = std::ranges::find(mnems, token, &Instruction::mnem);
 
         if (match == mnems.end())
         {
@@ -301,6 +299,21 @@ int assemble(char** args)
     }
 
     return 0;
+}
+
+int assemble(char** args)
+{
+    int r = 0;
+
+    r = firstPass(args);
+    if (r != 0)
+    {
+        return r;
+    }
+
+    r = secondPass(args);
+
+    return r;
 }
 
 constexpr std::string_view USAGE_MSG = "Usage: ass INPUT OUTPUT";
