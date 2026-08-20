@@ -115,9 +115,9 @@ std::uint16_t encode(const INSTR& instr, const std::vector<std::string_view>& ra
     return rawHex;
 }
 
-int assemble()
+int assemble(char** args)
 {
-    std::ifstream fi{"./test.asm"};
+    std::ifstream fi{args[1]};
     if (!fi.is_open())
     {
         std::println("Cannot open input file");
@@ -125,7 +125,7 @@ int assemble()
         return 1;
     }
 
-    std::ofstream fo{"./output.ch8", std::ios_base::binary | std::ios_base::out};
+    std::ofstream fo{args[2], std::ios_base::binary};
     ;
     if (!fo.is_open())
     {
@@ -226,9 +226,17 @@ int assemble()
     return 0;
 }
 
-int main()
+int main(int argc, char** argv)
 {
     // TODO: Pass args to be able to read files from there
     // TODO2: Also read files from redirected stdin
-    return assemble();
+
+    if (argc <= 2)
+    {
+        std::println("Missing input/output path");
+
+        return 1;
+    }
+
+    return assemble(argv);
 }
