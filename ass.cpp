@@ -12,7 +12,7 @@
 
 enum class OperandKind
 {
-    NONE, // TODO: Is this needed?
+    NONE,
     REGISTER,
     VALUE_N,
     VALUE_NN,
@@ -23,12 +23,13 @@ struct INSTR
 {
     std::string_view mnem;
     std::uint16_t hex;
+    std::uint8_t operandCount = 0;
     std::array<OperandKind, 3> operands = {OperandKind::NONE};
 };
 
 constexpr std::array mnems = {
     INSTR{.mnem = "CLS", .hex = 0x00E0},
-    INSTR{.mnem = "DRW", .hex = 0xD000, .operands = {OperandKind::REGISTER, OperandKind::REGISTER, OperandKind::VALUE_N}},
+    INSTR{.mnem = "DRW", .hex = 0xD000, .operandCount = 3, .operands = {OperandKind::REGISTER, OperandKind::REGISTER, OperandKind::VALUE_N}},
 };
 
 // TODO: Pass the line number for error messages
@@ -40,7 +41,7 @@ std::uint16_t encode(const INSTR& instr, const std::vector<std::string_view>& ra
     if (!instr.operands.empty())
     {
 
-        for (size_t i = 0; i < instr.operands.size(); i++)
+        for (size_t i = 0; i < instr.operandCount; i++)
         {
 
             switch (instr.operands[i])
@@ -73,7 +74,6 @@ std::uint16_t encode(const INSTR& instr, const std::vector<std::string_view>& ra
                     break;
                 }
 
-                // rawHex = rawHex | ((rawHex >> (8 - (4 * i))) | regNumber);
                 rawHex |= regNumber << (8 - (4 * i));
 
                 break;
@@ -83,6 +83,11 @@ std::uint16_t encode(const INSTR& instr, const std::vector<std::string_view>& ra
             {
                 uint8_t value;
                 auto err = std::from_chars(&rawArgs[i][0], &rawArgs[i][0] + 1, value, 10);
+
+                if (err.ec != std::errc{})
+                {
+                    // TODO: Handle error
+                }
 
                 rawHex |= value;
 
@@ -136,7 +141,7 @@ int assemble()
             line.pop_back();
         }
 
-        while (i < line.length() && (line[i] == ' ' || line[i] == '\t'))
+        while (i < line.length() && (line[i] == ' ' || line[i] == '\t' || line[i] == ','))
         {
             i++;
         }
@@ -148,7 +153,7 @@ int assemble()
 
         size_t start = i;
 
-        while (i < line.length() && line[i] != ' ' && line[i] != '\t' && line[i] != ';')
+        while (i < line.length() && line[i] != ' ' && line[i] != '\t' && line[i] != ';' && line[i] != ',')
         {
             i++;
         }
@@ -170,17 +175,28 @@ int assemble()
 
         while (i < line.length())
         {
-            i++; // We may have ended on a space/tab above
+            // We may have ended on a space/tab/comma above
+            while (i < line.length() && (line[i] == ' ' || line[i] == '\t' || line[i] == ','))
+            {
+                i++;
+            }
+
+            if (i >= line.length())
+            {
+                std::println("End of line reached while parsing ops");
+
+                break;
+            }
 
             if (line[i] == ';')
             {
-                std::println("Found comment after mnem, stopping parsing line {}", lineNr);
+                std::println("Found comment, stopping parsing line {}", lineNr);
 
                 break;
             }
 
             auto opStart = i;
-            while (i < line.length() && line[i] != ' ' && line[i] != '\t' && line[i] != ';')
+            while (i < line.length() && line[i] != ' ' && line[i] != '\t' && line[i] != ';' && line[i] != ',')
             {
                 i++;
             }
