@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
+#include <ios>
 #include <print>
 #include <string>
 #include <string_view>
@@ -116,18 +117,26 @@ std::uint16_t encode(const INSTR& instr, const std::vector<std::string_view>& ra
 
 int assemble()
 {
-    std::ifstream f{"./test.asm"};
-
-    if (!f.is_open())
+    std::ifstream fi{"./test.asm"};
+    if (!fi.is_open())
     {
-        std::println("Cannot open file");
+        std::println("Cannot open input file");
+
+        return 1;
+    }
+
+    std::ofstream fo{"./output.ch8", std::ios_base::binary | std::ios_base::out};
+    ;
+    if (!fo.is_open())
+    {
+        std::println("Cannot open output file");
 
         return 1;
     }
 
     std::string line;
 
-    for (size_t lineNr = 1; std::getline(f, line); ++lineNr)
+    for (size_t lineNr = 1; std::getline(fi, line); ++lineNr)
     {
         size_t i = 0;
 
@@ -210,7 +219,8 @@ int assemble()
 
         std::println("Final hex: {:x}", hex);
 
-        // TODO: Write the encoded instruction into a binary output, finally
+        fo.put(static_cast<char>(hex >> 8));
+        fo.put(static_cast<char>(hex & 0xFF));
     }
 
     return 0;

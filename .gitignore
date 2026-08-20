@@ -410,3 +410,4 @@ Makefile
 *.o
 *.exe
 *.asm
+*.ch8
