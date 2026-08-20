@@ -9,6 +9,7 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <unordered_map>
 #include <vector>
 
 enum class OperandKind
@@ -32,6 +33,8 @@ constexpr std::array mnems = {
     INSTR{.mnem = "CLS", .hex = 0x00E0},
     INSTR{.mnem = "DRW", .hex = 0xD000, .operandCount = 3, .operands = {OperandKind::REGISTER, OperandKind::REGISTER, OperandKind::VALUE_N}},
 };
+
+std::unordered_map<std::string, uint16_t> labelMemoryMap;
 
 // TODO: Pass the line number for error messages
 std::uint16_t encode(const INSTR& instr, const std::vector<std::string_view>& rawArgs)
@@ -115,7 +118,8 @@ std::uint16_t encode(const INSTR& instr, const std::vector<std::string_view>& ra
     return rawHex;
 }
 
-int assemble(char** args)
+// TODO: Rework, this is ugly but cba rn
+int firstPass(char** args)
 {
     std::ifstream fi{args[1]};
     if (!fi.is_open())
@@ -167,18 +171,91 @@ int assemble(char** args)
             i++;
         }
 
-        auto mnemonic = std::string_view{line}.substr(start, i - start);
+        auto token = std::string_view{line}.substr(start, i - start);
 
-        auto match = std::ranges::find(mnems, mnemonic, &INSTR::mnem);
+        if (line[i - 1] == ':')
+        {
+            std::println("IT'S A LABEL");
+
+            labelMemoryMap[std::string{token}] = 0x200 + (lineNr - 1);
+        }
+    }
+
+    return 0;
+};
+
+int assemble(char** args)
+{
+    firstPass(args);
+
+    std::ifstream fi{args[1]};
+    if (!fi.is_open())
+    {
+        std::println("Cannot open input file");
+
+        return 1;
+    }
+
+    std::ofstream fo{args[2], std::ios_base::binary};
+    ;
+    if (!fo.is_open())
+    {
+        std::println("Cannot open output file");
+
+        return 1;
+    }
+
+    std::string line;
+
+    for (size_t lineNr = 1; std::getline(fi, line); ++lineNr)
+    {
+        size_t i = 0;
+
+        if (line.empty())
+        {
+            continue;
+        }
+
+        if (line.back() == '\r')
+        {
+            line.pop_back();
+        }
+
+        while (i < line.length() && (line[i] == ' ' || line[i] == '\t' || line[i] == ','))
+        {
+            i++;
+        }
+
+        if (i == line.length() || line[i] == ';')
+        {
+            continue;
+        }
+
+        size_t start = i;
+
+        while (i < line.length() && line[i] != ' ' && line[i] != '\t' && line[i] != ';' && line[i] != ',')
+        {
+            i++;
+        }
+
+        auto token = std::string_view{line}.substr(start, i - start);
+
+        if (line[i - 1] == ':')
+        {
+            // Labels were parsed in the first pass
+            continue;
+        }
+
+        auto match = std::ranges::find(mnems, token, &INSTR::mnem);
 
         if (match == mnems.end())
         {
-            std::println("Unknown mnemonic: {} on line {}", mnemonic, lineNr);
+            std::println("Unknown mnemonic: {} on line {}", token, lineNr);
 
             return 1;
         }
 
-        std::println("Found matching mnemonic: {}", mnemonic);
+        std::println("Found matching mnemonic: {}", token);
 
         std::vector<std::string_view> rawOps{};
 
@@ -226,14 +303,23 @@ int assemble(char** args)
     return 0;
 }
 
+constexpr std::string_view USAGE_MSG = "Usage: ass INPUT OUTPUT";
+
 int main(int argc, char** argv)
 {
-    // TODO: Pass args to be able to read files from there
-    // TODO2: Also read files from redirected stdin
 
+    // TODO: Enable reading from a redirected stream
     if (argc <= 2)
     {
-        std::println("Missing input/output path");
+
+        if (argc <= 1)
+        {
+            std::println("Missing input path.");
+        }
+
+        std::println("Missing output path.");
+
+        std::println("{}", USAGE_MSG);
 
         return 1;
     }
