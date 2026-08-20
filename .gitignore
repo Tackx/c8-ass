@@ -407,6 +407,7 @@ Makefile
 *.swn
 /build/compile_commands.json
 
+build/
 *.o
 *.exe
 *.asm

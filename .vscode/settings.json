@@ -1,3 +1,6 @@
 {
-    "C_Cpp.intelliSenseEngine": "disabled"
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.copyCompileCommands": "${workspaceFolder}/compile_commands.json",
+    "debug.onTaskErrors": "debugAnyway"
 }
