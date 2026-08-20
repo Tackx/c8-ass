@@ -1,69 +1,115 @@
 #include <algorithm>
 #include <array>
+#include <charconv>
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
 #include <print>
 #include <string>
 #include <string_view>
+#include <system_error>
+#include <vector>
 
-enum class Regs
+enum class OperandKind
 {
-    NONE,
-    X,
-    XY
-};
-
-enum class ValueType
-{
-    NONE,
-    N,
-    NN,
-    NNN
-};
-
-enum class TokenType
-{
-    LABEL,
-    MNEM,
-    ARG1,
-    ARG2
-    // Comment?
-    // ?
+    NONE, // TODO: Is this needed?
+    REGISTER,
+    VALUE_N,
+    VALUE_NN,
+    VALUE_NNN
 };
 
 struct INSTR
 {
     std::string_view mnem;
     std::uint16_t hex;
-    Regs regs;
-    ValueType val_type;
+    std::array<OperandKind, 3> operands = {OperandKind::NONE};
 };
 
 constexpr std::array mnems = {
-    INSTR{.mnem = "CLS", .hex = 0x00E0, .regs = Regs::NONE, .val_type = ValueType::NONE},
+    INSTR{.mnem = "CLS", .hex = 0x00E0},
+    INSTR{.mnem = "DRW", .hex = 0xD000, .operands = {OperandKind::REGISTER, OperandKind::REGISTER, OperandKind::VALUE_N}},
 };
 
-// TODO: It also needs to accept the parsed "params" obviously
-std::uint16_t encode(const INSTR& instr)
+// TODO: Pass the line number for error messages
+std::uint16_t encode(const INSTR& instr, const std::vector<std::string_view>& rawArgs)
 {
 
     auto rawHex{instr.hex};
 
-    if (instr.val_type != ValueType::NONE)
+    if (!instr.operands.empty())
     {
-        // TODO - take from params
-    }
 
-    if (instr.regs != Regs::NONE)
-    {
-        // TODO - take from params
+        for (size_t i = 0; i < instr.operands.size(); i++)
+        {
+
+            switch (instr.operands[i])
+            {
+            case OperandKind::NONE:
+                break;
+
+            case OperandKind::REGISTER:
+
+            {
+                if (!rawArgs[i].starts_with("V") || rawArgs[i].length() != 2)
+                {
+                    std::println("Invalid register. Expected register name to start with 'V' and be in the Vx format.");
+
+                    break;
+                }
+
+                uint8_t regNumber;
+                auto err = std::from_chars(&rawArgs[i][1], &rawArgs[i][1] + 1, regNumber, 16);
+
+                if (err.ec != std::errc{})
+                {
+                    // TODO: Handle error
+                }
+
+                if (regNumber > 0xF)
+                {
+                    std::println("Invalid register number. Register number must be between 0 and F");
+
+                    break;
+                }
+
+                // rawHex = rawHex | ((rawHex >> (8 - (4 * i))) | regNumber);
+                rawHex |= regNumber << (8 - (4 * i));
+
+                break;
+            }
+
+            case OperandKind::VALUE_N:
+            {
+                uint8_t value;
+                auto err = std::from_chars(&rawArgs[i][0], &rawArgs[i][0] + 1, value, 10);
+
+                rawHex |= value;
+
+                break;
+            }
+
+            case OperandKind::VALUE_NN:
+                break;
+
+            case OperandKind::VALUE_NNN:
+                break;
+
+            default:
+                break;
+            }
+        }
+
+        for (auto& arg : rawArgs)
+        {
+            std::println("Arg: {}", arg);
+        }
     }
 
     return rawHex;
 }
 
-int main()
+int assemble()
 {
     std::ifstream f{"./test.asm"};
 
@@ -102,7 +148,7 @@ int main()
 
         size_t start = i;
 
-        while (i < line.length() && line[i] != ' ' && line[i] != '\t')
+        while (i < line.length() && line[i] != ' ' && line[i] != '\t' && line[i] != ';')
         {
             i++;
         }
@@ -120,8 +166,43 @@ int main()
 
         std::println("Found matching mnemonic: {}", mnemonic);
 
-        encode(*match);
+        std::vector<std::string_view> rawOps{};
+
+        while (i < line.length())
+        {
+            i++; // We may have ended on a space/tab above
+
+            if (line[i] == ';')
+            {
+                std::println("Found comment after mnem, stopping parsing line {}", lineNr);
+
+                break;
+            }
+
+            auto opStart = i;
+            while (i < line.length() && line[i] != ' ' && line[i] != '\t' && line[i] != ';')
+            {
+                i++;
+            }
+
+            auto op = std::string_view{line}.substr(opStart, i - opStart);
+
+            rawOps.push_back(op);
+        }
+
+        auto hex = encode(*match, rawOps);
+
+        std::println("Final hex: {:x}", hex);
+
+        // TODO: Write the encoded instruction into a binary output, finally
     }
 
     return 0;
+}
+
+int main()
+{
+    // TODO: Pass args to be able to read files from there
+    // TODO2: Also read files from redirected stdin
+    return assemble();
 }
