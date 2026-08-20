@@ -236,13 +236,18 @@ int secondPass(char** args)
             i++;
         }
 
-        auto token = std::string_view{line}.substr(start, i - start);
-
         if (line[i - 1] == ':')
         {
+            i++; // TODO: ADD A BOUNDS CHECK (there could be nothing after the label..)
+            start = i;
             // Labels were parsed in the first pass
-            continue;
+            while (i < line.length() && line[i] != ' ' && line[i] != '\t' && line[i] != ';' && line[i] != ',')
+            {
+                i++;
+            }
         }
+
+        auto token = std::string_view{line}.substr(start, i - start);
 
         auto match = std::ranges::find(mnems, token, &Instruction::mnem);
 
