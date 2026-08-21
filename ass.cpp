@@ -26,7 +26,7 @@ struct Instruction
     std::string_view mnem;
     std::uint16_t hex;
     std::uint8_t operandCount = 0;
-    std::array<OperandKind, 3> operands = {OperandKind::NONE};
+    std::array<OperandKind, 3> operands;
 };
 
 constexpr std::array mnems = {
@@ -93,6 +93,8 @@ std::uint16_t encode(const Instruction& instr, const std::vector<std::string_vie
                     // TODO: Handle error
                 }
 
+                // TODO: More validations..
+
                 rawHex |= value;
 
                 break;
@@ -138,6 +140,8 @@ int firstPass(char** args)
         return 1;
     }
 
+    uint16_t memPointer{0x200};
+
     std::string line;
 
     for (size_t lineNr = 1; std::getline(fi, line); ++lineNr)
@@ -171,14 +175,23 @@ int firstPass(char** args)
             i++;
         }
 
-        auto token = std::string_view{line}.substr(start, i - start);
+        auto token = std::string{line}.substr(start, i - start);
 
         if (line[i - 1] == ':')
         {
-            std::println("IT'S A LABEL");
+            if (labelMemoryMap.contains(token))
+            {
+                std::println("Found duplicate label on line {}. Label {} already exists.", lineNr, std::string_view{token}.substr(0, token.length() - 1));
 
-            labelMemoryMap[std::string{token}] = 0x200 + (lineNr - 1);
+                return 1;
+            }
+
+            labelMemoryMap[token] = memPointer;
+
+            std::println("IT'S A LABEL: {}", labelMemoryMap.at(token));
         }
+
+        memPointer += 2;
     }
 
     return 0;
@@ -238,9 +251,15 @@ int secondPass(char** args)
 
         if (line[i - 1] == ':')
         {
-            i++; // TODO: ADD A BOUNDS CHECK (there could be nothing after the label..)
+            i++;
+            if (line.length() <= i)
+            {
+                // The label is on a standalone line, no mnem to parse here
+                continue;
+            }
+
             start = i;
-            // Labels were parsed in the first pass
+            // Labels were parsed in the first pass, continue to the mnemonic
             while (i < line.length() && line[i] != ' ' && line[i] != '\t' && line[i] != ';' && line[i] != ',')
             {
                 i++;
@@ -306,25 +325,9 @@ int secondPass(char** args)
     return 0;
 }
 
-int assemble(char** args)
+int assemble(int argc, char** args)
 {
-    int r = 0;
-
-    r = firstPass(args);
-    if (r != 0)
-    {
-        return r;
-    }
-
-    r = secondPass(args);
-
-    return r;
-}
-
-constexpr std::string_view USAGE_MSG = "Usage: ass INPUT OUTPUT";
-
-int main(int argc, char** argv)
-{
+    static constexpr std::string_view USAGE_MSG = "Usage: ass INPUT OUTPUT";
 
     // TODO: Enable reading from a redirected stream
     if (argc <= 2)
@@ -342,5 +345,21 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    return assemble(argv);
+    int r = 0;
+
+    r = firstPass(args);
+    if (r != 0)
+    {
+        return r;
+    }
+
+    r = secondPass(args);
+
+    return r;
+}
+
+int main(int argc, char** argv)
+{
+
+    return assemble(argc, argv);
 }
