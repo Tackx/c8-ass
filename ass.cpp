@@ -272,7 +272,7 @@ int firstPass(char** args)
         {
             if (labelMemoryMap.contains(token))
             {
-                std::println("Found duplicate label on line {}. Label is {} already defined on line {}.", lineNr,
+                std::println("Found duplicate label on line {}. Label {} is already defined on line {}.", lineNr,
                              std::string_view{token}.substr(0, token.length() - 1), labelMemoryMap[token].line);
 
                 return 1;
