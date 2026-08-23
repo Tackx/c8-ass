@@ -18,7 +18,7 @@ enum class OperandKind
     REGISTER,
     VALUE_N,
     VALUE_NN,
-    VALUE_NNN
+    ADDRESS // AKA NNN
 };
 
 struct Instruction
@@ -47,6 +47,7 @@ std::uint16_t encode(const Instruction& instr, const std::vector<std::string_vie
 
         for (size_t i = 0; i < instr.operandCount; i++)
         {
+            const auto& str = rawArgs[i];
 
             switch (instr.operands[i])
             {
@@ -56,7 +57,7 @@ std::uint16_t encode(const Instruction& instr, const std::vector<std::string_vie
             case OperandKind::REGISTER:
 
             {
-                if (!rawArgs[i].starts_with("V") || rawArgs[i].length() != 2)
+                if (!str.starts_with("V") || str.length() != 2)
                 {
                     std::println("Invalid register. Expected register name to start with 'V' and be in the Vx format.");
 
@@ -64,7 +65,7 @@ std::uint16_t encode(const Instruction& instr, const std::vector<std::string_vie
                 }
 
                 uint8_t regNumber;
-                auto err = std::from_chars(&rawArgs[i][1], &rawArgs[i][1] + 1, regNumber, 16);
+                auto err = std::from_chars(&str[1], &str[1] + 1, regNumber, 16);
 
                 if (err.ec != std::errc{})
                 {
@@ -86,14 +87,14 @@ std::uint16_t encode(const Instruction& instr, const std::vector<std::string_vie
             case OperandKind::VALUE_N:
             {
                 uint8_t value;
-                auto err = std::from_chars(&rawArgs[i][0], &rawArgs[i][0] + 1, value, 10);
+                auto err = std::from_chars(&str[0], &str[0] + 2, value, 10);
 
                 if (err.ec != std::errc{})
                 {
                     // TODO: Handle error
                 }
 
-                // TODO: More validations..
+                // TODO: More validations.. (e.g. reject values > 15)
 
                 rawHex |= value;
 
@@ -101,10 +102,42 @@ std::uint16_t encode(const Instruction& instr, const std::vector<std::string_vie
             }
 
             case OperandKind::VALUE_NN:
-                break;
+            {
+                uint8_t value;
+                auto err = std::from_chars(&str[0], &str[0] + 3, value, 10);
 
-            case OperandKind::VALUE_NNN:
+                if (err.ec != std::errc{})
+                {
+                    // TODO: Handle error
+                }
+
+                // TODO: More validations.. (e.g. reject values > 255)
+
+                rawHex |= value;
+
                 break;
+            }
+
+            case OperandKind::ADDRESS:
+            {
+                uint8_t value;
+                auto err = std::from_chars(&str[0], &str[0] + 5, value, 10);
+
+                if (err.ec != std::errc{})
+                {
+                    // TODO: Handle error
+                }
+
+                if (err.ptr != str.data() + str.size())
+                {
+                }
+
+                // TODO: More validations.. (e.g. reject values > 4096)
+
+                rawHex |= value;
+
+                break;
+            }
 
             default:
                 break;
