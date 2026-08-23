@@ -411,5 +411,6 @@ build/
 *.o
 *.exe
 *.asm
+*.ass
 *.ch8
 compile_commands.json
