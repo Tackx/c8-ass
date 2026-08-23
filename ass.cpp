@@ -41,13 +41,19 @@ std::uint16_t encode(const Instruction& instr, const std::vector<std::string_vie
 {
 
     auto rawHex{instr.hex};
+    auto sourceValueBase = 10;
 
     if (!instr.operands.empty())
     {
 
         for (size_t i = 0; i < instr.operandCount; i++)
         {
-            const auto& str = rawArgs[i];
+            std::string str{rawArgs[i]};
+            if (str.starts_with("0x"))
+            {
+                sourceValueBase = 16;
+                str = str.substr(2);
+            }
 
             switch (instr.operands[i])
             {
@@ -65,7 +71,7 @@ std::uint16_t encode(const Instruction& instr, const std::vector<std::string_vie
                 }
 
                 uint8_t regNumber;
-                auto err = std::from_chars(&str[1], &str[1] + 1, regNumber, 16);
+                auto err = std::from_chars(&str[1], &str[1] + 1, regNumber, sourceValueBase);
 
                 if (err.ec != std::errc{})
                 {
@@ -87,7 +93,7 @@ std::uint16_t encode(const Instruction& instr, const std::vector<std::string_vie
             case OperandKind::VALUE_N:
             {
                 uint8_t value;
-                auto err = std::from_chars(&str[0], &str[0] + 2, value, 10);
+                auto err = std::from_chars(&str[0], &str[0] + 2, value, sourceValueBase);
 
                 if (err.ec != std::errc{})
                 {
@@ -104,7 +110,7 @@ std::uint16_t encode(const Instruction& instr, const std::vector<std::string_vie
             case OperandKind::VALUE_NN:
             {
                 uint8_t value;
-                auto err = std::from_chars(&str[0], &str[0] + 3, value, 10);
+                auto err = std::from_chars(&str[0], &str[0] + 3, value, sourceValueBase);
 
                 if (err.ec != std::errc{})
                 {
@@ -121,7 +127,7 @@ std::uint16_t encode(const Instruction& instr, const std::vector<std::string_vie
             case OperandKind::ADDRESS:
             {
                 uint8_t value;
-                auto err = std::from_chars(&str[0], &str[0] + 5, value, 10);
+                auto err = std::from_chars(&str[0], &str[0] + 5, value, sourceValueBase);
 
                 if (err.ec != std::errc{})
                 {
