@@ -80,4 +80,4 @@ struct Label
     size_t line;
 };
 
-static std::unordered_map<std::string, Label> labelMemoryMap;
+inline std::unordered_map<std::string, Label> labelMemoryMap;
