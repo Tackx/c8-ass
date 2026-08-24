@@ -1,7 +1,9 @@
 #include <algorithm>
+#include <array>
 #include <charconv>
 #include <cstddef>
 #include <cstdint>
+#include <format>
 #include <fstream>
 #include <ios>
 #include <print>
@@ -13,12 +15,193 @@
 #include "ass.h"
 
 // TODO: Pass the line number for error messages
-std::uint16_t encode(const InstructionDefinition& instr, const std::vector<std::string_view>& rawArgs)
+std::uint16_t encode(const Instruction& instr, const std::vector<std::string_view>& rawArgs)
 {
+
+    return rawHex;
+}
+
+// TODO: Rework, this is ugly but cba rn
+int firstPass(char** args)
+{
+    std::ifstream fi{args[1]};
+    if (!fi.is_open())
+    {
+        std::println("Cannot open input file");
+
+        return 1;
+    }
+
+    std::ofstream fo{args[2], std::ios_base::binary};
+    ;
+    if (!fo.is_open())
+    {
+        std::println("Cannot open output file");
+
+        return 1;
+    }
+
+    uint16_t memPointer{0x200};
+
+    std::string line;
+
+    for (size_t lineNr = 1; std::getline(fi, line); ++lineNr)
+    {
+        size_t i = 0;
+
+        if (line.empty())
+        {
+            continue;
+        }
+
+        if (line.back() == '\r')
+        {
+            line.pop_back();
+        }
+
+        while (i < line.length() && (line[i] == ' ' || line[i] == '\t' || line[i] == ','))
+        {
+            i++;
+        }
+
+        if (i == line.length() || line[i] == ';')
+        {
+            continue;
+        }
+
+        size_t start = i;
+
+        while (i < line.length() && line[i] != ' ' && line[i] != '\t' && line[i] != ';' && line[i] != ',')
+        {
+            i++;
+        }
+
+        auto token = std::string{line}.substr(start, i - start);
+
+        if (line[i - 1] == ':')
+        {
+            if (labelMemoryMap.contains(token))
+            {
+                std::println("Found duplicate label on line {}. Label {} is already defined on line {}.", lineNr,
+                             std::string_view{token}.substr(0, token.length() - 1), labelMemoryMap[token].line);
+
+                return 1;
+            }
+
+            labelMemoryMap[token] = Label{.addr = memPointer, .line = lineNr};
+
+            std::println("IT'S A LABEL: {}", labelMemoryMap.at(token).addr);
+        }
+
+        memPointer += 2;
+    }
+
+    return 0;
+};
+
+Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view> rawArgs, size_t lineNr)
+{
+
+    if (rawArgs.size() > 3)
+    {
+
+        // TODO: Refactor this..
+        throw "Too many arguments";
+    }
+
+    std::array<OperandKind, 3> ops{};
+
+    for (size_t i = 0; i < ops.size(); i++)
+    {
+
+        auto op = rawArgs[i];
+
+        if (op == "[I]" || op == "[i]")
+        {
+            ops[i] = OperandKind::I_MEM;
+
+            continue;
+        }
+
+        if (op == "I" || op == "i")
+        {
+            ops[i] = OperandKind::I_REG;
+
+            continue;
+        }
+
+        if (op == "V0" || op == "v0")
+        {
+            ops[i] = OperandKind::V0;
+
+            continue;
+        }
+
+        if (op.starts_with("V") || op.starts_with("v"))
+        {
+            ops[i] = OperandKind::REGISTER;
+
+            continue;
+        }
+
+        if (op == "DT" || op == "dt")
+        {
+            ops[i] = OperandKind::DT;
+
+            continue;
+        }
+
+        if (op == "K" || op == "k")
+        {
+            ops[i] = OperandKind::KEY;
+
+            continue;
+        }
+
+        if (op == "ST" || op == "st")
+        {
+            ops[i] = OperandKind::ST;
+
+            continue;
+        }
+
+        if (op == "LF" || op == "lf" || op == "F" || op == "f")
+        {
+            ops[i] = OperandKind::FONT;
+
+            continue;
+        }
+
+        if (op == "B" || op == "b")
+        {
+            ops[i] = OperandKind::BCD;
+
+            continue;
+        }
+
+        ops[i] = OperandKind::LITERAL;
+    }
+
+    // auto match = std::ranges::find(opTable, ops, &InstructionDefinition::operands);
+
+    auto match = std::ranges::find_if(opTable, [&](InstructionDefinition instr) { return instr.mnem == mnem && instr.operands == ops; });
+
+    if (match == opTable.end())
+    {
+        throw "Failed to find mnemonic with matching operand kinds";
+    }
+
+    InstructionDefinition instr = *match;
+
+    std::println("Found matching instruction in op table");
+
+    std::array<uint16_t, 3> parsedOpValues{};
 
     auto rawHex{instr.hex};
     auto sourceValueBase = 10;
 
+    // TODO: Iterate over rawArgs. Parse each arg based on the found instr's operands array and push the parsed value into parsedOpValues. Then construct the
+    // Instruction struct.
     if (!instr.operands.empty())
     {
 
@@ -131,85 +314,30 @@ std::uint16_t encode(const InstructionDefinition& instr, const std::vector<std::
         }
     }
 
-    return rawHex;
-}
+    // for (uint8_t i = 0; i < ops.size(); i++)
+    // {
+    //     uint8_t base = 10;
+    //     auto op = rawArgs[i];
 
-// TODO: Rework, this is ugly but cba rn
-int firstPass(char** args)
-{
-    std::ifstream fi{args[1]};
-    if (!fi.is_open())
-    {
-        std::println("Cannot open input file");
+    //     if (op.starts_with("0x"))
+    //     {
+    //         base = 16;
+    //         op.remove_prefix(2);
+    //     }
 
-        return 1;
-    }
+    //     uint16_t parsed;
+    //     auto err = std::from_chars(&op[0], &op[op.length() - 1], parsed, base);
 
-    std::ofstream fo{args[2], std::ios_base::binary};
-    ;
-    if (!fo.is_open())
-    {
-        std::println("Cannot open output file");
+    //     if (err.ec != std::errc{})
+    //     {
+    //         throw "Failed parsing arg"; // TODO
+    //     }
+    // }
 
-        return 1;
-    }
-
-    uint16_t memPointer{0x200};
-
-    std::string line;
-
-    for (size_t lineNr = 1; std::getline(fi, line); ++lineNr)
-    {
-        size_t i = 0;
-
-        if (line.empty())
-        {
-            continue;
-        }
-
-        if (line.back() == '\r')
-        {
-            line.pop_back();
-        }
-
-        while (i < line.length() && (line[i] == ' ' || line[i] == '\t' || line[i] == ','))
-        {
-            i++;
-        }
-
-        if (i == line.length() || line[i] == ';')
-        {
-            continue;
-        }
-
-        size_t start = i;
-
-        while (i < line.length() && line[i] != ' ' && line[i] != '\t' && line[i] != ';' && line[i] != ',')
-        {
-            i++;
-        }
-
-        auto token = std::string{line}.substr(start, i - start);
-
-        if (line[i - 1] == ':')
-        {
-            if (labelMemoryMap.contains(token))
-            {
-                std::println("Found duplicate label on line {}. Label {} is already defined on line {}.", lineNr,
-                             std::string_view{token}.substr(0, token.length() - 1), labelMemoryMap[token].line);
-
-                return 1;
-            }
-
-            labelMemoryMap[token] = Label{.addr = memPointer, .line = lineNr};
-
-            std::println("IT'S A LABEL: {}", labelMemoryMap.at(token).addr);
-        }
-
-        memPointer += 2;
-    }
-
-    return 0;
+    return Instruction{
+        .def = *match,
+        .operandValues = rawArgs // TODO: Replace labels with memory addresses..
+    };
 };
 
 int secondPass(char** args)
@@ -281,18 +409,7 @@ int secondPass(char** args)
             }
         }
 
-        auto token = std::string_view{line}.substr(start, i - start);
-
-        auto match = std::ranges::find(ops, token, &InstructionDefinition::mnem);
-
-        if (match == ops.end())
-        {
-            std::println("Unknown mnemonic: {} on line {}", token, lineNr);
-
-            return 1;
-        }
-
-        std::println("Found matching mnemonic: {}", token);
+        auto mnem = std::string_view{line}.substr(start, i - start);
 
         std::vector<std::string_view> rawOps{};
 
@@ -329,7 +446,9 @@ int secondPass(char** args)
             rawOps.push_back(op);
         }
 
-        auto hex = encode(*match, rawOps);
+        auto parsedInstruction = parseInstruction(mnem, rawOps, lineNr);
+
+        auto hex = encode(parsedInstruction, rawOps);
 
         std::println("Final hex: {:x}", hex);
 
