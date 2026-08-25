@@ -24,6 +24,8 @@ std::uint16_t encode(const Instruction& instr)
 {
     auto rawHex{instr.def.hex};
 
+    
+
     return rawHex;
 }
 
@@ -121,7 +123,7 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
 
     if (rawArgs.size() > 0)
     {
-        for (size_t i = 0; i < parsedOperands.size(); i++)
+        for (size_t i = 0; i < rawArgs.size(); i++)
         {
 
             auto op = rawArgs[i];
