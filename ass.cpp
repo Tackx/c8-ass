@@ -14,9 +14,15 @@
 
 #include "ass.h"
 
-// TODO: Pass the line number for error messages
-std::uint16_t encode(const Instruction& instr, const std::vector<std::string_view>& rawArgs)
+bool isCompatible(Operand first, Operand second)
 {
+    return first.argType == second.argType && first.literalType == second.literalType;
+}
+
+// TODO: Pass the line number for error messages
+std::uint16_t encode(const Instruction& instr)
+{
+    auto rawHex{instr.def.hex};
 
     return rawHex;
 }
@@ -109,82 +115,109 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
         throw "Too many arguments";
     }
 
-    std::array<OperandKind, 3> ops{};
+    // Parse operand type for each arg
+    // Needed so we know how to parse the values down the line
+    std::array<Operand, 3> parsedOperands{};
 
-    for (size_t i = 0; i < ops.size(); i++)
+    if (rawArgs.size() > 0)
     {
-
-        auto op = rawArgs[i];
-
-        if (op == "[I]" || op == "[i]")
+        for (size_t i = 0; i < parsedOperands.size(); i++)
         {
-            ops[i] = OperandKind::I_MEM;
 
-            continue;
+            auto op = rawArgs[i];
+
+            if (op == "[I]" || op == "[i]")
+            {
+                parsedOperands[i] = {ArgType::I_MEM};
+
+                continue;
+            }
+
+            if (op == "I" || op == "i")
+            {
+                parsedOperands[i] = {ArgType::I_REG};
+
+                continue;
+            }
+
+            if (op == "V0" || op == "v0")
+            {
+                parsedOperands[i] = {ArgType::V0};
+
+                continue;
+            }
+
+            if (op.starts_with("V") || op.starts_with("v"))
+            {
+                parsedOperands[i] = {ArgType::REGISTER};
+
+                continue;
+            }
+
+            if (op == "DT" || op == "dt")
+            {
+                parsedOperands[i] = {ArgType::DT};
+
+                continue;
+            }
+
+            if (op == "K" || op == "k")
+            {
+                parsedOperands[i] = {ArgType::KEY};
+
+                continue;
+            }
+
+            if (op == "ST" || op == "st")
+            {
+                parsedOperands[i] = {ArgType::ST};
+
+                continue;
+            }
+
+            if (op == "LF" || op == "lf" || op == "F" || op == "f")
+            {
+                parsedOperands[i] = {ArgType::FONT};
+
+                continue;
+            }
+
+            if (op == "B" || op == "b")
+            {
+                parsedOperands[i] = {ArgType::BCD};
+
+                continue;
+            }
+
+            parsedOperands[i] = {ArgType::LITERAL};
         }
-
-        if (op == "I" || op == "i")
-        {
-            ops[i] = OperandKind::I_REG;
-
-            continue;
-        }
-
-        if (op == "V0" || op == "v0")
-        {
-            ops[i] = OperandKind::V0;
-
-            continue;
-        }
-
-        if (op.starts_with("V") || op.starts_with("v"))
-        {
-            ops[i] = OperandKind::REGISTER;
-
-            continue;
-        }
-
-        if (op == "DT" || op == "dt")
-        {
-            ops[i] = OperandKind::DT;
-
-            continue;
-        }
-
-        if (op == "K" || op == "k")
-        {
-            ops[i] = OperandKind::KEY;
-
-            continue;
-        }
-
-        if (op == "ST" || op == "st")
-        {
-            ops[i] = OperandKind::ST;
-
-            continue;
-        }
-
-        if (op == "LF" || op == "lf" || op == "F" || op == "f")
-        {
-            ops[i] = OperandKind::FONT;
-
-            continue;
-        }
-
-        if (op == "B" || op == "b")
-        {
-            ops[i] = OperandKind::BCD;
-
-            continue;
-        }
-
-        ops[i] = OperandKind::LITERAL;
     }
 
-    // auto match = std::ranges::find(opTable, ops, &InstructionDefinition::operands);
+    // Find matching instruction/op
+    auto match = std::ranges::find_if(opTable,
+                                      [&](InstructionDefinition instr)
+                                      {
+                                          if (mnem != instr.mnem)
+                                          {
+                                              return false;
+                                          }
 
-    auto match = std::ranges::find_if(opTable, [&](InstructionDefinition instr) { return instr.mnem == mnem && instr.operands == ops; });
+                                          if (parsedOperands.empty() && instr.operands.empty())
+                                          {
+                                              return true;
+                                          }
+
+                                          bool compatible = false;
+                                          for (size_t i = 0; i < parsedOperands.size(); i++)
+                                          {
+                                              if (isCompatible(parsedOperands[i], instr.operands[i]))
+                                              {
+                                                  compatible = true;
+                                              };
+                                          }
+
+                                          return compatible;
+                                      });
 
     if (match == opTable.end())
     {
@@ -195,16 +228,15 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
 
     std::println("Found matching instruction in op table");
 
+    // Parse the arg values
     std::array<uint16_t, 3> parsedOpValues{};
 
-    auto rawHex{instr.hex};
     auto sourceValueBase = 10;
 
-    // TODO: Iterate over rawArgs. Parse each arg based on the found instr's operands array and push the parsed value into parsedOpValues. Then construct the
+    // Iterate over rawArgs. Parse each arg based on the found instr's operands array and push the parsed value into parsedOpValues. Then construct the
     // Instruction struct.
     if (!instr.operands.empty())
     {
-
         for (size_t i = 0; i < instr.operandCount; i++)
         {
             std::string str{rawArgs[i]};
@@ -214,12 +246,12 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
                 str = str.substr(2);
             }
 
-            switch (instr.operands[i])
+            switch (instr.operands[i].argType)
             {
-            case OperandKind::NONE:
+            case ArgType::NONE:
                 break;
 
-            case OperandKind::REGISTER:
+            case ArgType::REGISTER:
             {
                 if (!str.starts_with("V") || str.length() != 2)
                 {
@@ -243,100 +275,89 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
                     break;
                 }
 
-                rawHex |= regNumber << (8 - (4 * i));
+                parsedOpValues[i] = regNumber;
+                // rawHex |= regNumber << (8 - (4 * i));
 
                 break;
             }
 
-            case OperandKind::VALUE_N:
+            case ArgType::LITERAL:
             {
-                uint8_t value;
-                auto err = std::from_chars(&str[0], &str[0] + 2, value, sourceValueBase);
+                auto literalType = instr.operands[i].literalType;
 
-                if (err.ec != std::errc{})
+                if (!literalType.has_value())
                 {
-                    // TODO: Handle error
+                    throw "Cannot parse literal (arg specified as literal, but found no value for it)";
                 }
 
-                // TODO: More validations.. (e.g. reject values > 15)
-
-                rawHex |= value;
-
-                break;
-            }
-
-            case OperandKind::VALUE_NN:
-            {
-                uint8_t value;
-                auto err = std::from_chars(&str[0], &str[0] + 3, value, sourceValueBase);
-
-                if (err.ec != std::errc{})
+                if (literalType == LiteralType::VALUE_N)
                 {
-                    // TODO: Handle error
-                }
+                    uint8_t value;
+                    auto err = std::from_chars(&str[0], &str[0] + 2, value, sourceValueBase);
 
-                // TODO: More validations.. (e.g. reject values > 255)
+                    if (err.ec != std::errc{})
+                    {
+                        // TODO: Handle error
+                    }
 
-                rawHex |= value;
+                    // TODO: More validations.. (e.g. reject values > 15)
 
-                break;
-            }
+                    // rawHex |= value;
+                    parsedOpValues[i] = value;
 
-            case OperandKind::ADDRESS:
-            {
-                uint8_t value;
-                auto err = std::from_chars(&str[0], &str[0] + 5, value, sourceValueBase);
+                    break;
+                };
 
-                if (err.ec != std::errc{})
+                if (literalType == LiteralType::VALUE_NN)
                 {
-                    // TODO: Handle error
-                }
+                    uint8_t value;
+                    auto err = std::from_chars(&str[0], &str[0] + 3, value, sourceValueBase);
 
-                if (err.ptr != str.data() + str.size())
+                    if (err.ec != std::errc{})
+                    {
+                        // TODO: Handle error
+                    }
+
+                    // TODO: More validations.. (e.g. reject values > 255)
+
+                    // rawHex |= value;
+                    parsedOpValues[i] = value;
+
+                    break;
+                };
+
+                if (literalType == LiteralType::ADDRESS)
                 {
-                }
+                    uint8_t value;
+                    auto err = std::from_chars(&str[0], &str[0] + 5, value, sourceValueBase);
 
-                // TODO: More validations.. (e.g. reject values > 4096)
+                    if (err.ec != std::errc{})
+                    {
+                        // TODO: Handle error
+                    }
 
-                rawHex |= value;
+                    if (err.ptr != str.data() + str.size())
+                    {
+                    }
 
-                break;
+                    // TODO: More validations.. (e.g. reject values > 4096)
+
+                    // rawHex |= value;
+                    parsedOpValues[i] = value;
+
+                    break;
+                };
             }
 
             default:
                 break;
             }
         }
-
-        for (auto& arg : rawArgs)
-        {
-            std::println("Arg: {}", arg);
-        }
     }
-
-    // for (uint8_t i = 0; i < ops.size(); i++)
-    // {
-    //     uint8_t base = 10;
-    //     auto op = rawArgs[i];
-
-    //     if (op.starts_with("0x"))
-    //     {
-    //         base = 16;
-    //         op.remove_prefix(2);
-    //     }
-
-    //     uint16_t parsed;
-    //     auto err = std::from_chars(&op[0], &op[op.length() - 1], parsed, base);
-
-    //     if (err.ec != std::errc{})
-    //     {
-    //         throw "Failed parsing arg"; // TODO
-    //     }
-    // }
 
     return Instruction{
         .def = *match,
-        .operandValues = rawArgs // TODO: Replace labels with memory addresses..
+        .operandValues = parsedOpValues, // TODO: Replace labels with memory addresses..
     };
 };
 
@@ -448,7 +469,7 @@ int secondPass(char** args)
 
         auto parsedInstruction = parseInstruction(mnem, rawOps, lineNr);
 
-        auto hex = encode(parsedInstruction, rawOps);
+        auto hex = encode(parsedInstruction);
 
         std::println("Final hex: {:x}", hex);
 
