@@ -230,8 +230,6 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
     // Parse the arg values
     std::array<uint16_t, 3> parsedOpValues{};
 
-    auto sourceValueBase = 10;
-
     // Iterate over rawArgs. Parse each arg based on the found instr's operands array and push the parsed value into parsedOpValues. Then construct the
     // Instruction struct.
     auto rawHex{instr.hex};
@@ -239,6 +237,8 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
     {
         for (size_t i = 0; i < instr.operandCount; i++)
         {
+            auto sourceValueBase = 10;
+
             std::string str{rawArgs[i]};
             if (str.starts_with("0x"))
             {
@@ -331,8 +331,6 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
 
                 if (literalType == LiteralType::ADDRESS)
                 {
-                    // sourceValueBase = 16;
-
                     // Labels can only be used as address placeholders
                     // Check if label map contains the literal and if so,
                     // turn the label into the assigned address
@@ -344,7 +342,7 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
                         break;
                     }
 
-                    uint8_t value;
+                    uint16_t value;
                     auto err = std::from_chars(&str[0], &str[0] + 5, value, sourceValueBase);
 
                     if (err.ec != std::errc{})
