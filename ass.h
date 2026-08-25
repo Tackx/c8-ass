@@ -13,7 +13,7 @@ enum class ArgType
     REGISTER,
     LITERAL,
     I_REG,
-    V0,
+    // V0,
     DT,
     KEY,
     ST,
@@ -35,8 +35,6 @@ struct Operand
     std::optional<LiteralType> literalType;
 };
 
-
-
 struct InstructionDefinition
 {
     std::string_view mnem;
@@ -49,6 +47,7 @@ struct Instruction
 {
     const InstructionDefinition& def;
     std::array<uint16_t, 3> operandValues;
+    uint16_t encodedHex;
 };
 
 constexpr Operand REG{ArgType::REGISTER};
@@ -57,7 +56,7 @@ constexpr Operand NN{ArgType::LITERAL, LiteralType::VALUE_NN};
 constexpr Operand NNN{ArgType::LITERAL, LiteralType::ADDRESS};
 constexpr Operand I_REG{ArgType::I_REG};
 constexpr Operand I_MEM{ArgType::I_MEM};
-constexpr Operand V0{ArgType::V0};
+// constexpr Operand V0{ArgType::V0};
 constexpr Operand DT{ArgType::DT};
 constexpr Operand ST{ArgType::ST};
 constexpr Operand KEY{ArgType::KEY};
@@ -84,7 +83,7 @@ constexpr std::array opTable = {
 
     // JP
     InstructionDefinition{.mnem = "JP", .hex = 0x1000, .operandCount = 1, .operands = {NNN}},
-    InstructionDefinition{.mnem = "JP", .hex = 0xB000, .operandCount = 2, .operands = {V0, NNN}},
+    InstructionDefinition{.mnem = "JP", .hex = 0xB000, .operandCount = 2, .operands = {REG, NNN}},
 
     // LD
     InstructionDefinition{.mnem = "LD", .hex = 0x6000, .operandCount = 2, .operands = {REG, NN}},

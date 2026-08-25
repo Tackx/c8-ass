@@ -16,17 +16,12 @@
 
 bool isCompatible(Operand first, Operand second)
 {
-    return first.argType == second.argType && first.literalType == second.literalType;
-}
+    if (first.literalType.has_value() && second.literalType.has_value())
+    {
+        return first.argType == second.argType && first.literalType == second.literalType;
+    }
 
-// TODO: Pass the line number for error messages
-std::uint16_t encode(const Instruction& instr)
-{
-    auto rawHex{instr.def.hex};
-
-    
-
-    return rawHex;
+    return first.argType == second.argType;
 }
 
 // TODO: Rework, this is ugly but cba rn
@@ -84,7 +79,7 @@ int firstPass(char** args)
             i++;
         }
 
-        auto token = std::string{line}.substr(start, i - start);
+        auto token = std::string{line}.substr(start, i - start - 1);
 
         if (line[i - 1] == ':')
         {
@@ -142,12 +137,12 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
                 continue;
             }
 
-            if (op == "V0" || op == "v0")
-            {
-                parsedOperands[i] = {ArgType::V0};
+            // if (op == "V0" || op == "v0")
+            // {
+            //     parsedOperands[i] = {ArgType::V0};
 
-                continue;
-            }
+            //     continue;
+            // }
 
             if (op.starts_with("V") || op.starts_with("v"))
             {
@@ -197,25 +192,27 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
 
     // Find matching instruction/op
     auto match = std::ranges::find_if(opTable,
-                                      [&](InstructionDefinition instr)
+                                      [&](const InstructionDefinition& instr)
                                       {
                                           if (mnem != instr.mnem)
                                           {
                                               return false;
                                           }
 
-                                          if (parsedOperands.empty() && instr.operands.empty())
+                                          if (rawArgs.size() != instr.operandCount)
                                           {
-                                              return true;
+                                              return false;
                                           }
 
-                                          bool compatible = false;
-                                          for (size_t i = 0; i < parsedOperands.size(); i++)
+                                          bool compatible = true;
+                                          for (size_t i = 0; i < instr.operandCount; i++)
                                           {
-                                              if (isCompatible(parsedOperands[i], instr.operands[i]))
+                                              if (!isCompatible(parsedOperands[i], instr.operands[i]))
                                               {
-                                                  compatible = true;
-                                              };
+                                                  compatible = false;
+
+                                                  break;
+                                              }
                                           }
 
                                           return compatible;
@@ -237,6 +234,7 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
 
     // Iterate over rawArgs. Parse each arg based on the found instr's operands array and push the parsed value into parsedOpValues. Then construct the
     // Instruction struct.
+    auto rawHex{instr.hex};
     if (!instr.operands.empty())
     {
         for (size_t i = 0; i < instr.operandCount; i++)
@@ -255,6 +253,8 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
 
             case ArgType::REGISTER:
             {
+                sourceValueBase = 16;
+
                 if (!str.starts_with("V") || str.length() != 2)
                 {
                     std::println("Invalid register. Expected register name to start with 'V' and be in the Vx format.");
@@ -278,13 +278,14 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
                 }
 
                 parsedOpValues[i] = regNumber;
-                // rawHex |= regNumber << (8 - (4 * i));
+                rawHex |= regNumber << (8 - (4 * i));
 
                 break;
             }
 
             case ArgType::LITERAL:
             {
+
                 auto literalType = instr.operands[i].literalType;
 
                 if (!literalType.has_value())
@@ -304,8 +305,8 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
 
                     // TODO: More validations.. (e.g. reject values > 15)
 
-                    // rawHex |= value;
                     parsedOpValues[i] = value;
+                    rawHex |= value;
 
                     break;
                 };
@@ -322,14 +323,27 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
 
                     // TODO: More validations.. (e.g. reject values > 255)
 
-                    // rawHex |= value;
                     parsedOpValues[i] = value;
+                    rawHex |= value;
 
                     break;
                 };
 
                 if (literalType == LiteralType::ADDRESS)
                 {
+                    // sourceValueBase = 16;
+
+                    // Labels can only be used as address placeholders
+                    // Check if label map contains the literal and if so,
+                    // turn the label into the assigned address
+                    if (labelMemoryMap.contains(str))
+                    {
+                        parsedOpValues[i] = labelMemoryMap[str].addr;
+                        rawHex |= labelMemoryMap[str].addr;
+
+                        break;
+                    }
+
                     uint8_t value;
                     auto err = std::from_chars(&str[0], &str[0] + 5, value, sourceValueBase);
 
@@ -344,8 +358,8 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
 
                     // TODO: More validations.. (e.g. reject values > 4096)
 
-                    // rawHex |= value;
                     parsedOpValues[i] = value;
+                    rawHex |= value;
 
                     break;
                 };
@@ -360,6 +374,7 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
     return Instruction{
         .def = *match,
         .operandValues = parsedOpValues, // TODO: Replace labels with memory addresses..
+        .encodedHex = rawHex,
     };
 };
 
@@ -418,7 +433,7 @@ int secondPass(char** args)
         if (line[i - 1] == ':')
         {
             i++;
-            if (line.length() <= i)
+            if (line.length() <= i || line[i] == ';')
             {
                 // The label is on a standalone line, no mnem to parse here
                 continue;
@@ -471,12 +486,10 @@ int secondPass(char** args)
 
         auto parsedInstruction = parseInstruction(mnem, rawOps, lineNr);
 
-        auto hex = encode(parsedInstruction);
+        std::println("Final hex: {:x}", parsedInstruction.encodedHex);
 
-        std::println("Final hex: {:x}", hex);
-
-        fo.put(static_cast<char>(hex >> 8));
-        fo.put(static_cast<char>(hex & 0xFF));
+        fo.put(static_cast<char>(parsedInstruction.encodedHex >> 8));
+        fo.put(static_cast<char>(parsedInstruction.encodedHex & 0xFF));
     }
 
     return 0;
