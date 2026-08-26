@@ -15,4 +15,6 @@ struct Label
 
 // TODO: Maybe refactor into a class along with the memory location counter and error list
 inline std::unordered_map<std::string, Label> labelMemoryMap;
+
+int parseLabels(char** args);
 } // namespace ass

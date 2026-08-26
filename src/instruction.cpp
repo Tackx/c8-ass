@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <format>
 #include <print>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -31,9 +32,7 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
 
     if (rawArgs.size() > 3)
     {
-
-        // TODO: Refactor this..
-        throw "Too many arguments";
+        throw std::runtime_error("Too many arguments");
     }
 
     // Parse operand type for each arg
@@ -144,7 +143,7 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
 
     if (match == opTable.end())
     {
-        throw "Failed to find mnemonic with matching operand kinds";
+        throw std::runtime_error("Failed to find mnemonic with matching operand kinds");
     }
 
     InstructionDefinition instr = *match;
@@ -209,12 +208,11 @@ Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view
 
             case ArgType::LITERAL:
             {
-
                 auto literalType = instr.operands[i].literalType;
 
                 if (!literalType.has_value())
                 {
-                    throw "Cannot parse literal (arg specified as literal, but found no value for it)";
+                    throw std::runtime_error("Cannot parse literal (arg specified as literal, but found no value for it)");
                 }
 
                 if (literalType == LiteralType::VALUE_N)

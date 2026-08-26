@@ -19,6 +19,10 @@ target_sources(ass PRIVATE
     src/instruction.h
     src/label.h
     src/ass.h
+    src/label.cpp
+    src/emitter.h
+    src/emitter.cpp
+    src/parser.h
 )
 
 target_include_directories(ass PRIVATE src)
