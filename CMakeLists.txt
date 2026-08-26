@@ -23,6 +23,7 @@ target_sources(ass PRIVATE
     src/emitter.h
     src/emitter.cpp
     src/parser.h
+    src/parser.cpp
 )
 
 target_include_directories(ass PRIVATE src)

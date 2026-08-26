@@ -1,133 +1,31 @@
-#include <cstddef>
 #include <format>
-#include <fstream>
 #include <optional>
 #include <print>
 #include <string>
 #include <string_view>
-#include <vector>
 
 #include "ass.h"
 #include "emitter.h"
-#include "instruction.h"
 #include "label.h"
+#include "parser.h"
 
 using namespace ass;
 
-std::optional<Instruction> parseLine(std::string_view line, size_t lineNr)
-{
-    size_t i = 0;
-
-    if (line.empty())
-    {
-        return {};
-    }
-
-    if (line.back() == '\r')
-    {
-        line.remove_suffix(1);
-    }
-
-    while (i < line.length() && (line[i] == ' ' || line[i] == '\t' || line[i] == ','))
-    {
-        i++;
-    }
-
-    if (i == line.length() || line[i] == ';')
-    {
-        return {};
-    }
-
-    size_t start = i;
-
-    while (i < line.length() && line[i] != ' ' && line[i] != '\t' && line[i] != ';' && line[i] != ',')
-    {
-        i++;
-    }
-
-    if (line[i - 1] == ':')
-    {
-        i++;
-        if (line.length() <= i || line[i] == ';')
-        {
-            // The label is on a standalone line, no mnem to parse here
-            return {};
-        }
-
-        start = i;
-        // Labels were parsed in the first pass, continue to the mnemonic
-        while (i < line.length() && line[i] != ' ' && line[i] != '\t' && line[i] != ';' && line[i] != ',')
-        {
-            i++;
-        }
-    }
-
-    auto mnem = std::string_view{line}.substr(start, i - start);
-
-    std::vector<std::string_view> rawOps{};
-
-    while (i < line.length())
-    {
-        // We may have ended on a space/tab/comma above
-        while (i < line.length() && (line[i] == ' ' || line[i] == '\t' || line[i] == ','))
-        {
-            i++;
-        }
-
-        if (i >= line.length())
-        {
-            std::println("End of line reached while parsing ops");
-
-            break;
-        }
-
-        if (line[i] == ';')
-        {
-            std::println("Found comment, stopping parsing line {}", lineNr);
-
-            break;
-        }
-
-        auto opStart = i;
-        while (i < line.length() && line[i] != ' ' && line[i] != '\t' && line[i] != ';' && line[i] != ',')
-        {
-            i++;
-        }
-
-        auto op = std::string_view{line}.substr(opStart, i - opStart);
-
-        rawOps.push_back(op);
-    }
-
-    auto parsedInstruction = parseInstruction(mnem, rawOps, lineNr);
-
-    std::println("Final hex: {:x}", parsedInstruction.encodedHex);
-
-    return parsedInstruction;
-}
-
 int emitCode(char** args)
 {
-    std::ifstream fi{args[1]};
-    if (!fi.is_open())
-    {
-        std::println("Cannot open input file");
-
-        return 1;
-    }
-
+    Parser parser{args[1]};
     Emitter emitter{args[2]};
 
-    std::string line;
-
-    for (size_t lineNr = 1; std::getline(fi, line); ++lineNr)
+    while (true)
     {
-        auto parsedInstruction = parseLine(line, lineNr);
+        auto parsedInstruction = parser.parseLine();
 
-        if (parsedInstruction.has_value())
+        if (!parsedInstruction.has_value())
         {
-            emitter.emit(*parsedInstruction);
+            break;
         }
+
+        emitter.emit(*parsedInstruction);
     }
 
     return 0;
