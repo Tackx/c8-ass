@@ -8,6 +8,7 @@
 #include <string_view>
 #include <vector>
 
+#include "ass.h"
 #include "instruction.h"
 #include "label.h"
 
@@ -25,7 +26,7 @@ int firstPass(char** args)
     }
 
     std::ofstream fo{args[2], std::ios_base::binary};
-    ;
+
     if (!fo.is_open())
     {
         std::println("Cannot open output file");
@@ -208,7 +209,7 @@ int secondPass(char** args)
     return 0;
 }
 
-int assemble(int argc, char** args)
+int ass::assemble(int argc, char** args)
 {
     static constexpr std::string_view USAGE_MSG = "Usage: ass INPUT OUTPUT";
 
@@ -239,10 +240,4 @@ int assemble(int argc, char** args)
     r = secondPass(args);
 
     return r;
-}
-
-int main(int argc, char** argv)
-{
-
-    return assemble(argc, argv);
 }

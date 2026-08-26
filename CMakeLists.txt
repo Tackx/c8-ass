@@ -13,10 +13,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_executable(ass)
 
 target_sources(ass PRIVATE
+    src/main.cpp
     src/ass.cpp
     src/instruction.cpp
     src/instruction.h
     src/label.h
+    src/ass.h
 )
 
 target_include_directories(ass PRIVATE src)
