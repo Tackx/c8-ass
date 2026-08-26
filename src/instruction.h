@@ -1,10 +1,14 @@
+#pragma once
+
 #include <array>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
-#include <string>
 #include <string_view>
-#include <unordered_map>
+#include <vector>
+
+namespace ass
+{
 
 enum class ArgType
 {
@@ -137,11 +141,7 @@ constexpr std::array opTable = {
     InstructionDefinition{.mnem = "XOR", .hex = 0x8003, .operandCount = 2, .operands = {REG, REG}},
 };
 
-struct Label
-{
-    uint16_t addr;
-    size_t line;
-};
+Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view> rawArgs, size_t lineNr);
 
-// TODO: Maybe refactor into a class along with the memory location counter and error list
-inline std::unordered_map<std::string, Label> labelMemoryMap;
+bool isCompatible(Operand first, Operand second);
+} // namespace ass

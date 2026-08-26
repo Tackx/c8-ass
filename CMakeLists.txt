@@ -10,8 +10,17 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_executable(ass ass.cpp
-    ass.h)
+add_executable(ass)
 
-target_link_libraries(ass PRIVATE stdc++exp)
+target_sources(ass PRIVATE
+    src/ass.cpp
+    src/instruction.cpp
+    src/instruction.h
+    src/label.h
+)
 
+target_include_directories(ass PRIVATE src)
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_link_libraries(ass PRIVATE stdc++exp)
+endif()
