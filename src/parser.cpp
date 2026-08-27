@@ -393,7 +393,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::str
 
     return Instruction{
         .def = *match,
-        .operandValues = parsedOpValues, // TODO: Replace labels with memory addresses..
+        .operandValues = parsedOpValues,
         .encodedHex = rawHex,
     };
 };
