@@ -9,9 +9,9 @@
 namespace ass
 {
 
-Emitter::Emitter(const std::string& outPath) : fo{outPath, std::ios_base::binary}
+Emitter::Emitter(const std::string& outPath) : m_fo{outPath, std::ios_base::binary}
 {
-    if (!fo.is_open())
+    if (!m_fo.is_open())
     {
         throw std::runtime_error("Cannot open output file");
     }
@@ -19,8 +19,8 @@ Emitter::Emitter(const std::string& outPath) : fo{outPath, std::ios_base::binary
 
 void Emitter::emit(const Instruction& instruction)
 {
-    fo.put(static_cast<char>(instruction.encodedHex >> 8));
-    fo.put(static_cast<char>(instruction.encodedHex & 0xFF));
+    m_fo.put(static_cast<char>(instruction.encodedHex >> 8));
+    m_fo.put(static_cast<char>(instruction.encodedHex & 0xFF));
 }
 
 } // namespace ass

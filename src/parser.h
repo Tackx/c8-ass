@@ -17,8 +17,9 @@ class Parser
     std::optional<Instruction> parseLine();
 
   private:
-    std::ifstream fi;
-    std::size_t lineNr = 1;
+    std::ifstream m_fi;
+    std::string m_line;
+    std::size_t m_lineNr = 1;
 
     Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view> rawArgs);
 };

@@ -5,6 +5,7 @@
 #include <charconv>
 #include <cstddef>
 #include <cstdint>
+#include <format>
 #include <optional>
 #include <print>
 #include <stdexcept>
@@ -17,9 +18,9 @@
 
 namespace ass
 {
-Parser::Parser(const std::string& inPath) : fi{inPath}
+Parser::Parser(const std::string& inPath) : m_fi{inPath}
 {
-    if (!fi.is_open())
+    if (!m_fi.is_open())
     {
         throw std::runtime_error("Cannot open input file");
     }
@@ -27,45 +28,44 @@ Parser::Parser(const std::string& inPath) : fi{inPath}
 
 std::optional<Instruction> Parser::parseLine()
 {
-    std::string line;
 
-    while (std::getline(fi, line))
+    while (std::getline(m_fi, m_line))
     {
-        ++lineNr;
+        ++m_lineNr;
 
         size_t i = 0;
 
-        if (line.empty())
+        if (m_line.empty())
         {
             continue;
         }
 
-        if (line.back() == '\r')
+        if (m_line.back() == '\r')
         {
-            line.pop_back();
+            m_line.pop_back();
         }
 
-        while (i < line.length() && (line[i] == ' ' || line[i] == '\t' || line[i] == ','))
+        while (i < m_line.length() && (m_line[i] == ' ' || m_line[i] == '\t' || m_line[i] == ','))
         {
             i++;
         }
 
-        if (i == line.length() || line[i] == ';')
+        if (i == m_line.length() || m_line[i] == ';')
         {
             continue;
         }
 
         size_t start = i;
 
-        while (i < line.length() && line[i] != ' ' && line[i] != '\t' && line[i] != ';' && line[i] != ',')
+        while (i < m_line.length() && m_line[i] != ' ' && m_line[i] != '\t' && m_line[i] != ';' && m_line[i] != ',')
         {
             i++;
         }
 
-        if (line[i - 1] == ':')
+        if (m_line[i - 1] == ':')
         {
             i++;
-            if (line.length() <= i || line[i] == ';')
+            if (m_line.length() <= i || m_line[i] == ';')
             {
                 // The label is on a standalone line, no mnem to parse here
                 continue;
@@ -73,45 +73,45 @@ std::optional<Instruction> Parser::parseLine()
 
             start = i;
             // Labels were parsed in the first pass, continue to the mnemonic
-            while (i < line.length() && line[i] != ' ' && line[i] != '\t' && line[i] != ';' && line[i] != ',')
+            while (i < m_line.length() && m_line[i] != ' ' && m_line[i] != '\t' && m_line[i] != ';' && m_line[i] != ',')
             {
                 i++;
             }
         }
 
-        auto mnem = std::string_view{line}.substr(start, i - start);
+        auto mnem = std::string_view{m_line}.substr(start, i - start);
 
         std::vector<std::string_view> rawOps{};
 
-        while (i < line.length())
+        while (i < m_line.length())
         {
             // We may have ended on a space/tab/comma above
-            while (i < line.length() && (line[i] == ' ' || line[i] == '\t' || line[i] == ','))
+            while (i < m_line.length() && (m_line[i] == ' ' || m_line[i] == '\t' || m_line[i] == ','))
             {
                 i++;
             }
 
-            if (i >= line.length())
+            if (i >= m_line.length())
             {
                 std::println("End of line reached while parsing ops");
 
                 break;
             }
 
-            if (line[i] == ';')
+            if (m_line[i] == ';')
             {
-                std::println("Found comment, stopping parsing line {}", lineNr);
+                std::println("Found comment, stopping parsing line {}", m_lineNr);
 
                 break;
             }
 
             auto opStart = i;
-            while (i < line.length() && line[i] != ' ' && line[i] != '\t' && line[i] != ';' && line[i] != ',')
+            while (i < m_line.length() && m_line[i] != ' ' && m_line[i] != '\t' && m_line[i] != ';' && m_line[i] != ',')
             {
                 i++;
             }
 
-            auto op = std::string_view{line}.substr(opStart, i - opStart);
+            auto op = std::string_view{m_line}.substr(opStart, i - opStart);
 
             rawOps.push_back(op);
         }
@@ -241,7 +241,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::str
 
     if (match == opTable.end())
     {
-        throw std::runtime_error("Failed to find mnemonic with matching operand kinds");
+        throw std::runtime_error(std::format("Failed to find mnemonic with matching operand kinds.\nLine: {}\nMnemonic: {}", --m_lineNr, mnem));
     }
 
     InstructionDefinition instr = *match;
@@ -361,6 +361,8 @@ Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::str
 
                         break;
                     }
+
+                    // TODO: Add check if the value is numeric. If not, it's an invalid label.
 
                     uint16_t value;
                     auto err = std::from_chars(&str[0], &str[0] + 5, value, sourceValueBase);

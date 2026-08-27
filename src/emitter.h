@@ -15,6 +15,6 @@ class Emitter
     void emit(const Instruction& instruction);
 
   private:
-    std::ofstream fo;
+    std::ofstream m_fo;
 };
 } // namespace ass
