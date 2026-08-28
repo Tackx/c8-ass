@@ -7,6 +7,9 @@
 #include <string_view>
 
 #include "label.h"
+#include "parser.h"
+
+using namespace ::ass;
 
 int ass::parseLabels(char** args)
 {
@@ -36,19 +39,19 @@ int ass::parseLabels(char** args)
             line.pop_back();
         }
 
-        while (i < line.length() && (line[i] == ' ' || line[i] == '\t' || line[i] == ','))
+        while (i < line.length() && (Parser::isWhitespace(line[i]) || Parser::isArgSeparator(line[i])))
         {
             i++;
         }
 
-        if (i == line.length() || line[i] == ';')
+        if (i == line.length() || Parser::isComment(line[i]))
         {
             continue;
         }
 
         size_t start = i;
 
-        while (i < line.length() && line[i] != ' ' && line[i] != '\t' && line[i] != ';' && line[i] != ',')
+        while (i < line.length() && !Parser::isWhitespace(line[i]) && !Parser::isComment(line[i]) && !Parser::isArgSeparator(line[i]))
         {
             i++;
         }

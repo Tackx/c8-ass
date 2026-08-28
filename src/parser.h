@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstddef>
 #include <fstream>
 #include <optional>
@@ -15,6 +17,9 @@ class Parser
     Parser(const std::string& inPath);
 
     std::optional<Instruction> parseLine();
+    static bool isWhitespace(char c);
+    static bool isComment(char c);
+    static bool isArgSeparator(char c);
 
   private:
     std::ifstream m_fi;

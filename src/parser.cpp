@@ -45,19 +45,19 @@ std::optional<Instruction> Parser::parseLine()
             m_line.pop_back();
         }
 
-        while (i < m_line.length() && (m_line[i] == ' ' || m_line[i] == '\t' || m_line[i] == ','))
+        while (i < m_line.length() && (Parser::isWhitespace(m_line[i]) || Parser::isArgSeparator(m_line[i])))
         {
             i++;
         }
 
-        if (i == m_line.length() || m_line[i] == ';')
+        if (i == m_line.length() || Parser::isArgSeparator(m_line[i]))
         {
             continue;
         }
 
         size_t start = i;
 
-        while (i < m_line.length() && m_line[i] != ' ' && m_line[i] != '\t' && m_line[i] != ';' && m_line[i] != ',')
+        while (i < m_line.length() && !Parser::isWhitespace(m_line[i]) && !Parser::isComment(m_line[i]) && !Parser::isArgSeparator(m_line[i]))
         {
             i++;
         }
@@ -65,7 +65,7 @@ std::optional<Instruction> Parser::parseLine()
         if (m_line[i - 1] == ':')
         {
             i++;
-            if (m_line.length() <= i || m_line[i] == ';')
+            if (m_line.length() <= i || Parser::isArgSeparator(m_line[i]))
             {
                 // The label is on a standalone line, no mnem to parse here
                 continue;
@@ -73,7 +73,7 @@ std::optional<Instruction> Parser::parseLine()
 
             start = i;
             // Labels were parsed in the first pass, continue to the mnemonic
-            while (i < m_line.length() && m_line[i] != ' ' && m_line[i] != '\t' && m_line[i] != ';' && m_line[i] != ',')
+            while (i < m_line.length() && !Parser::isWhitespace(m_line[i]) && !Parser::isComment(m_line[i]) && !Parser::isArgSeparator(m_line[i]))
             {
                 i++;
             }
@@ -86,7 +86,7 @@ std::optional<Instruction> Parser::parseLine()
         while (i < m_line.length())
         {
             // We may have ended on a space/tab/comma above
-            while (i < m_line.length() && (m_line[i] == ' ' || m_line[i] == '\t' || m_line[i] == ','))
+            while (i < m_line.length() && (Parser::isWhitespace(m_line[i]) || Parser::isArgSeparator(m_line[i])))
             {
                 i++;
             }
@@ -98,7 +98,7 @@ std::optional<Instruction> Parser::parseLine()
                 break;
             }
 
-            if (m_line[i] == ';')
+            if (Parser::isArgSeparator(m_line[i]))
             {
                 std::println("Found comment, stopping parsing line {}", m_lineNr);
 
@@ -106,7 +106,7 @@ std::optional<Instruction> Parser::parseLine()
             }
 
             auto opStart = i;
-            while (i < m_line.length() && m_line[i] != ' ' && m_line[i] != '\t' && m_line[i] != ';' && m_line[i] != ',')
+            while (i < m_line.length() && !Parser::isWhitespace(m_line[i]) && !Parser::isComment(m_line[i]) && !Parser::isArgSeparator(m_line[i]))
             {
                 i++;
             }
@@ -124,6 +124,21 @@ std::optional<Instruction> Parser::parseLine()
     }
 
     return {};
+};
+
+bool Parser::isWhitespace(char c)
+{
+    return c == ' ' || c == '\t';
+}
+
+bool Parser::isComment(char c)
+{
+    return c == ';';
+};
+
+bool Parser::isArgSeparator(char c)
+{
+    return c == ',';
 };
 
 Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::string_view> rawArgs)
