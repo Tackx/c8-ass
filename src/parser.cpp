@@ -18,7 +18,7 @@
 
 namespace ass
 {
-Parser::Parser(const std::string& inPath) : m_fi{inPath}
+Parser::Parser(const std::string& inPath) : m_lineNr{0}, m_fi{inPath}
 {
     if (!m_fi.is_open())
     {
@@ -50,7 +50,7 @@ std::optional<Instruction> Parser::parseLine()
             i++;
         }
 
-        if (i == m_line.length() || Parser::isArgSeparator(m_line[i]))
+        if (i == m_line.length() || Parser::isComment(m_line[i]))
         {
             continue;
         }
@@ -256,7 +256,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::str
 
     if (match == opTable.end())
     {
-        throw std::runtime_error(std::format("Failed to find mnemonic with matching operand kinds.\nLine: {}\nMnemonic: {}", --m_lineNr, mnem));
+        throw std::runtime_error(std::format("Failed to find mnemonic with matching operand kinds.\nLine: {}\nMnemonic: {}", m_lineNr, mnem));
     }
 
     InstructionDefinition instr = *match;

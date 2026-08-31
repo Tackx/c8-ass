@@ -24,7 +24,7 @@ class Parser
   private:
     std::ifstream m_fi;
     std::string m_line;
-    std::size_t m_lineNr = 1;
+    std::size_t m_lineNr;
 
     Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view> rawArgs);
 };
