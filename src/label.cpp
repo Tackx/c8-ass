@@ -51,14 +51,15 @@ int ass::parseLabels(char** args)
 
         size_t start = i;
 
-        while (i < line.length() && !Parser::isWhitespace(line[i]) && !Parser::isComment(line[i]) && !Parser::isArgSeparator(line[i]))
+        // TODO: Add another static helper isLabelEnd
+        while (i < line.length() && !Parser::isWhitespace(line[i]) && !Parser::isComment(line[i]) && !Parser::isArgSeparator(line[i]) && line[i] != ':')
         {
             i++;
         }
 
-        auto token = std::string{line}.substr(start, i - start - 1);
+        auto token = line.substr(start, i - start);
 
-        if (line[i - 1] == ':')
+        if (line[i] == ':')
         {
             if (labelMemoryMap.contains(token))
             {
@@ -71,6 +72,24 @@ int ass::parseLabels(char** args)
             labelMemoryMap[token] = Label{.addr = memPointer, .line = lineNr};
 
             std::println("IT'S A LABEL: {}", labelMemoryMap.at(token).addr);
+
+            if (i < line.length())
+            {
+                i++; // Move cursor forward by one char, as we ended on ':'
+            }
+
+            while (i < line.length() && (Parser::isWhitespace(line[i])))
+            {
+                i++;
+            }
+
+            // Continue to avoid incrementing the memory pointer, but only if it's a standalone label (on its own line)
+            if (i == line.length() || Parser::isComment(line[i]))
+            {
+                continue;
+            }
+
+            // TODO: It would make sense to do semantic checks here in the first pass too to have feedback and stop the process earlier
         }
 
         memPointer += 2;

@@ -98,7 +98,7 @@ std::optional<Instruction> Parser::parseLine()
                 break;
             }
 
-            if (Parser::isArgSeparator(m_line[i]))
+            if (Parser::isComment(m_line[i]))
             {
                 std::println("Found comment, stopping parsing line {}", m_lineNr);
 
@@ -124,7 +124,7 @@ std::optional<Instruction> Parser::parseLine()
     }
 
     return {};
-};
+}
 
 bool Parser::isWhitespace(char c)
 {
@@ -134,12 +134,12 @@ bool Parser::isWhitespace(char c)
 bool Parser::isComment(char c)
 {
     return c == ';';
-};
+}
 
 bool Parser::isArgSeparator(char c)
 {
     return c == ',';
-};
+}
 
 Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::string_view> rawArgs)
 {
@@ -411,5 +411,5 @@ Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::str
         .operandValues = parsedOpValues,
         .encodedHex = rawHex,
     };
-};
+}
 } // namespace ass
