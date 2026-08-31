@@ -57,25 +57,28 @@ std::optional<Instruction> Parser::parseLine()
 
         size_t start = i;
 
-        while (i < m_line.length() && !Parser::isWhitespace(m_line[i]) && !Parser::isComment(m_line[i]) && !Parser::isArgSeparator(m_line[i]))
+        while (i < m_line.length() && !Parser::isWhitespace(m_line[i]) && !Parser::isComment(m_line[i]) && !Parser::isArgSeparator(m_line[i]) &&
+               m_line[i] != ':')
         {
             i++;
         }
 
-        if (m_line[i - 1] == ':')
+        if (m_line[i] == ':')
         {
-            i++;
-            if (m_line.length() <= i || Parser::isArgSeparator(m_line[i]))
+            if (i < m_line.length())
             {
-                // The label is on a standalone line, no mnem to parse here
-                continue;
+                i++; // Move cursor forward by one char, as we ended on ':'
             }
 
-            start = i;
-            // Labels were parsed in the first pass, continue to the mnemonic
-            while (i < m_line.length() && !Parser::isWhitespace(m_line[i]) && !Parser::isComment(m_line[i]) && !Parser::isArgSeparator(m_line[i]))
+            while (i < m_line.length() && (Parser::isWhitespace(m_line[i])))
             {
                 i++;
+            }
+
+            // Continue to avoid incrementing the memory pointer, but only if it's a standalone label (on its own line)
+            if (i == m_line.length() || Parser::isComment(m_line[i]))
+            {
+                continue;
             }
         }
 
