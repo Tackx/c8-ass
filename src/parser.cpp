@@ -153,7 +153,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::str
 
     // Parse operand type for each arg
     // Needed so we know how to parse the values down the line
-    std::array<Operand, 3> parsedOperands{};
+    std::array<Operand, 3> parsedOperandTypes{};
 
     if (rawArgs.size() > 0)
     {
@@ -164,14 +164,14 @@ Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::str
 
             if (op == "[I]" || op == "[i]")
             {
-                parsedOperands[i] = {ArgType::I_MEM};
+                parsedOperandTypes[i] = {ArgType::I_MEM};
 
                 continue;
             }
 
             if (op == "I" || op == "i")
             {
-                parsedOperands[i] = {ArgType::I_REG};
+                parsedOperandTypes[i] = {ArgType::I_REG};
 
                 continue;
             }
@@ -185,47 +185,47 @@ Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::str
 
             if (op.starts_with("V") || op.starts_with("v"))
             {
-                parsedOperands[i] = {ArgType::REGISTER};
+                parsedOperandTypes[i] = {ArgType::REGISTER};
 
                 continue;
             }
 
             if (op == "DT" || op == "dt")
             {
-                parsedOperands[i] = {ArgType::DT};
+                parsedOperandTypes[i] = {ArgType::DT};
 
                 continue;
             }
 
             if (op == "K" || op == "k")
             {
-                parsedOperands[i] = {ArgType::KEY};
+                parsedOperandTypes[i] = {ArgType::KEY};
 
                 continue;
             }
 
             if (op == "ST" || op == "st")
             {
-                parsedOperands[i] = {ArgType::ST};
+                parsedOperandTypes[i] = {ArgType::ST};
 
                 continue;
             }
 
             if (op == "LF" || op == "lf" || op == "F" || op == "f")
             {
-                parsedOperands[i] = {ArgType::FONT};
+                parsedOperandTypes[i] = {ArgType::FONT};
 
                 continue;
             }
 
             if (op == "B" || op == "b")
             {
-                parsedOperands[i] = {ArgType::BCD};
+                parsedOperandTypes[i] = {ArgType::BCD};
 
                 continue;
             }
 
-            parsedOperands[i] = {ArgType::LITERAL};
+            parsedOperandTypes[i] = {ArgType::LITERAL};
         }
     }
 
@@ -246,7 +246,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::str
                                           bool compatible = true;
                                           for (size_t i = 0; i < instr.operandCount; i++)
                                           {
-                                              if (!isCompatible(parsedOperands[i], instr.operands[i]))
+                                              if (!isCompatible(parsedOperandTypes[i], instr.operands[i]))
                                               {
                                                   compatible = false;
 
@@ -277,6 +277,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::str
         for (size_t i = 0; i < instr.operandCount; i++)
         {
             auto sourceValueBase = 10;
+            // uint8_t
 
             std::string str{rawArgs[i]};
             if (str.starts_with("0x"))
@@ -317,6 +318,9 @@ Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::str
                 }
 
                 parsedOpValues[i] = regNumber;
+
+                // TODO: Fix shift - it should shift like this only if the previous arg type is not I_REG. If it is, it should shift by 8 even if its the second
+                // position E.g.: ADD I, VC shifts VC by 4 instead of 8 atm.
                 rawHex |= regNumber << (8 - (4 * i));
 
                 break;
