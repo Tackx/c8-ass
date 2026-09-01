@@ -321,7 +321,15 @@ Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::str
 
                 // TODO: Fix shift - it should shift like this only if the previous arg type is not I_REG. If it is, it should shift by 8 even if its the second
                 // position E.g.: ADD I, VC shifts VC by 4 instead of 8 atm.
-                rawHex |= regNumber << (8 - (4 * i));
+
+                if (i > 0 && instr.operands[i - 1].argType != ArgType::REGISTER)
+                {
+                    rawHex |= regNumber << 8;
+                }
+                else
+                {
+                    rawHex |= regNumber << (8 - (4 * i));
+                }
 
                 break;
             }
