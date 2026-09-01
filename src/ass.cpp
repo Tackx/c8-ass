@@ -1,3 +1,4 @@
+#include <exception>
 #include <format>
 #include <optional>
 #include <print>
@@ -53,16 +54,25 @@ int ass::assemble(int argc, char** args)
 
     int r = 0;
 
-    // First pass, which only parses and stores labels + their memory addresses
-    // for substitution in second pass
-    r = parseLabels(args);
-    if (r != 0)
+    try
     {
+        // First pass, which only parses and stores labels + their memory addresses
+        // for substitution in second pass
+        r = parseLabels(args);
+        if (r != 0)
+        {
+            return r;
+        }
+
+        // Second pass
+        r = emitCode(args);
+
         return r;
     }
+    catch (const std::exception& e)
+    {
+        std::println("Exception caught: {}", e.what());
 
-    // Second pass
-    r = emitCode(args);
-
-    return r;
+        return 1;
+    }
 }
