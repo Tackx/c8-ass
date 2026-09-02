@@ -319,9 +319,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::str
 
                 parsedOpValues[i] = regNumber;
 
-                // TODO: Fix shift - it should shift like this only if the previous arg type is not I_REG. If it is, it should shift by 8 even if its the second
-                // position E.g.: ADD I, VC shifts VC by 4 instead of 8 atm.
-
+                // TODO: This is ugly, divide ArgType::REGISTER into REGISTER_X and REGISTER_Y, each having its own case in this switch
                 if (i > 0 && instr.operands[i - 1].argType != ArgType::REGISTER)
                 {
                     rawHex |= regNumber << 8;
