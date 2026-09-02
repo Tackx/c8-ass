@@ -15,6 +15,9 @@
 #include <vector>
 
 #include "label.h"
+#include "util.h"
+
+using namespace ass;
 
 namespace ass
 {
@@ -26,12 +29,11 @@ Parser::Parser(const std::string& inPath) : m_lineNr{0}, m_fi{inPath}
     }
 }
 
-std::optional<Instruction> Parser::parseLine()
+[[nodiscard]] std::optional<Instruction> Parser::parseLine()
 {
-
     while (std::getline(m_fi, m_line))
     {
-        ++m_lineNr;
+        m_lineNr++;
 
         size_t i = 0;
 
@@ -80,6 +82,16 @@ std::optional<Instruction> Parser::parseLine()
             {
                 continue;
             }
+
+            start = i; // Move start to the current position, skipping the label
+
+            while (i < m_line.length() && !Parser::isWhitespace(m_line[i]) && !Parser::isComment(m_line[i]) && !Parser::isArgSeparator(m_line[i]) &&
+                   m_line[i] != ':')
+            {
+                i++;
+            }
+
+            // TODO: Add check if i > start?
         }
 
         auto mnem = std::string_view{m_line}.substr(start, i - start);
@@ -233,7 +245,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::str
     auto match = std::ranges::find_if(opTable,
                                       [&](const InstructionDefinition& instr)
                                       {
-                                          if (mnem != instr.mnem)
+                                          if (!equalsIgnoreCase(mnem, instr.mnem))
                                           {
                                               return false;
                                           }
@@ -295,9 +307,9 @@ Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::str
             {
                 sourceValueBase = 16;
 
-                if (!str.starts_with("V") || str.length() != 2)
+                if ((!str.starts_with("V") && !str.starts_with("v")) || str.length() != 2)
                 {
-                    std::println("Invalid register. Expected register name to start with 'V' and be in the Vx format.");
+                    throw std::runtime_error("Invalid register. Expected register name to start with 'V' and be in the Vx format.");
 
                     break;
                 }
@@ -312,7 +324,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::str
 
                 if (regNumber > 0xF)
                 {
-                    std::println("Invalid register number. Register number must be between 0 and F");
+                    throw std::runtime_error("Invalid register number. Register number must be between 0 and F");
 
                     break;
                 }
