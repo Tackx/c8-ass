@@ -1,8 +1,7 @@
 #include <cstddef>
 #include <cstdint>
-#include <format>
-#include <fstream>
 #include <print>
+#include <ranges>
 #include <string>
 #include <string_view>
 
@@ -11,22 +10,17 @@
 
 using namespace ::ass;
 
-int ass::parseLabels(char** args)
+int ass::parseLabels(std::string_view textContent)
 {
-    std::ifstream fi{args[1]};
-    if (!fi.is_open())
-    {
-        std::println("Cannot open input file");
-
-        return 1;
-    }
 
     uint16_t memPointer{0x200};
 
-    std::string line;
-
-    for (size_t lineNr = 1; std::getline(fi, line); ++lineNr)
+    // TODO: Rewrite using std::ranges
+    size_t lineNr = 1;
+    for (auto str : textContent | std::views::split('\n'))
     {
+        std::string_view line{str};
+
         size_t i = 0;
 
         if (line.empty())
@@ -36,7 +30,7 @@ int ass::parseLabels(char** args)
 
         if (line.back() == '\r')
         {
-            line.pop_back();
+            line.remove_suffix(1);
         }
 
         while (i < line.length() && (Parser::isWhitespace(line[i]) || Parser::isArgSeparator(line[i])))
@@ -57,9 +51,9 @@ int ass::parseLabels(char** args)
             i++;
         }
 
-        auto token = line.substr(start, i - start);
+        std::string token{line.substr(start, i - start)};
 
-        if (line[i] == ':')
+        if (i < line.length() && line[i] == ':')
         {
             if (labelMemoryMap.contains(token))
             {
@@ -93,6 +87,8 @@ int ass::parseLabels(char** args)
         }
 
         memPointer += 2;
+
+        lineNr++;
     }
 
     return 0;

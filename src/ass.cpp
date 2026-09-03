@@ -1,9 +1,14 @@
 #include <exception>
 #include <format>
+#include <fstream>
+#include <ios>
 #include <optional>
 #include <print>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "ass.h"
 #include "emitter.h"
@@ -52,13 +57,25 @@ int ass::assemble(int argc, char** args)
         return 1;
     }
 
-    int r = 0;
+    std::stringstream buffer;
+    {
+        std::ifstream t(args[1], std::ios::binary);
+        if (!t)
+        {
+            throw std::runtime_error("Failed to open file.");
+        }
+
+        buffer << t.rdbuf();
+    }
+
+    auto fileContent = std::move(buffer).str();
 
     try
     {
+        int r = 0;
         // First pass, which only parses and stores labels + their memory addresses
         // for substitution in second pass
-        r = parseLabels(args);
+        r = parseLabels(fileContent);
         if (r != 0)
         {
             return r;
