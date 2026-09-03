@@ -21,7 +21,7 @@ using namespace ass;
 
 namespace ass
 {
-Parser::Parser(const std::string& inPath) : m_lineNr{0}, m_fi{inPath}
+Parser::Parser(const std::string& inPath) : m_fi{inPath}, m_lineNr{0}
 {
     if (!m_fi.is_open())
     {

@@ -30,6 +30,10 @@ target_sources(ass PRIVATE
 
 target_include_directories(ass PRIVATE src)
 
+target_compile_options(ass PRIVATE
+    -Wall -Wextra -Wconversion -Wsign-conversion -Wshadow -Wpedantic)
+
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(ass PRIVATE stdc++exp)
 endif()

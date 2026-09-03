@@ -36,7 +36,7 @@ enum class LiteralType
 struct Operand
 {
     ArgType argType;
-    std::optional<LiteralType> literalType;
+    std::optional<LiteralType> literalType{};
 };
 
 struct InstructionDefinition
@@ -44,7 +44,7 @@ struct InstructionDefinition
     std::string_view mnem;
     std::uint16_t hex;
     std::uint8_t operandCount = 0;
-    std::array<Operand, 3> operands;
+    std::array<Operand, 3> operands{};
 };
 
 struct Instruction
