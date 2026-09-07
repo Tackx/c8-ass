@@ -30,8 +30,12 @@ target_sources(ass PRIVATE
 
 target_include_directories(ass PRIVATE src)
 
-target_compile_options(ass PRIVATE
-    -Wall -Wextra -Wconversion -Wsign-conversion -Wshadow -Wpedantic)
+if(MSVC)
+    target_compile_options(ass PRIVATE /W4 /permissive-)
+else()
+    target_compile_options(ass PRIVATE
+        -Wall -Wextra -Wconversion -Wsign-conversion -Wshadow -Wpedantic)
+endif()
 
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
