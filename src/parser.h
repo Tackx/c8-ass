@@ -11,6 +11,7 @@
 
 namespace ass
 {
+
 struct Label
 {
     uint16_t addr;
@@ -37,4 +38,5 @@ class Parser
 
     Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view> rawArgs);
 };
+
 } // namespace ass

@@ -11,11 +11,13 @@
 
 #include "ass.h"
 #include "emitter.h"
+#include "lexer.h"
 #include "parser.h"
 
-using namespace ass;
+namespace ass
+{
 
-int ass::assemble(int argc, char** args)
+int assemble(int argc, char** args)
 {
     static constexpr std::string_view USAGE_MSG = "Usage: ass INPUT OUTPUT";
 
@@ -50,8 +52,11 @@ int ass::assemble(int argc, char** args)
 
     try
     {
+        Lexer lexer{fileContent};
         Parser parser{fileContent};
         Emitter emitter{args[2]};
+
+        auto tokens = lexer.getTokens();
 
         // First pass, which only parses and stores labels + their memory addresses
         // for substitution in second pass
@@ -71,3 +76,5 @@ int ass::assemble(int argc, char** args)
         return 1;
     }
 }
+
+} // namespace ass
