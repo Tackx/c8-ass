@@ -17,9 +17,7 @@ target_sources(ass PRIVATE
     src/ass.cpp
     src/instruction.cpp
     src/instruction.h
-    src/label.h
     src/ass.h
-    src/label.cpp
     src/emitter.h
     src/emitter.cpp
     src/parser.h

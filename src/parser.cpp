@@ -8,85 +8,161 @@
 #include <format>
 #include <optional>
 #include <print>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <unordered_map>
 #include <vector>
 
-#include "label.h"
 #include "util.h"
-
-using namespace ass;
 
 namespace ass
 {
-Parser::Parser(const std::string& inPath) : m_fi{inPath}, m_lineNr{0}
+
+Parser::Parser(std::string_view lines) : m_lines{lines}, m_lineNr{0}
 {
-    if (!m_fi.is_open())
-    {
-        throw std::runtime_error("Cannot open input file");
-    }
 }
 
-[[nodiscard]] std::optional<Instruction> Parser::parseLine()
+void Parser::parseLabels(std::string_view textContent)
 {
-    while (std::getline(m_fi, m_line))
+    uint16_t memPointer{0x200};
+
+    size_t lineNr = 0;
+    for (auto str : textContent | std::views::split('\n'))
     {
-        m_lineNr++;
+        lineNr++;
+
+        std::string_view line{str};
 
         size_t i = 0;
 
-        if (m_line.empty())
+        if (line.empty())
         {
             continue;
         }
 
-        if (m_line.back() == '\r')
+        if (line.back() == '\r')
         {
-            m_line.pop_back();
+            line.remove_suffix(1);
         }
 
-        while (i < m_line.length() && (Parser::isWhitespace(m_line[i]) || Parser::isArgSeparator(m_line[i])))
+        while (i < line.length() && (Parser::isWhitespace(line[i]) || Parser::isArgSeparator(line[i])))
         {
             i++;
         }
 
-        if (i == m_line.length() || Parser::isComment(m_line[i]))
+        if (i == line.length() || Parser::isComment(line[i]))
         {
             continue;
         }
 
         size_t start = i;
 
-        while (i < m_line.length() && !Parser::isWhitespace(m_line[i]) && !Parser::isComment(m_line[i]) && !Parser::isArgSeparator(m_line[i]) &&
-               m_line[i] != ':')
+        // TODO: Add another static helper isLabelEnd
+        while (i < line.length() && !Parser::isWhitespace(line[i]) && !Parser::isComment(line[i]) && !Parser::isArgSeparator(line[i]) && line[i] != ':')
         {
             i++;
         }
 
-        if (m_line[i] == ':')
+        std::string token{line.substr(start, i - start)};
+
+        if (i < line.length() && line[i] == ':')
         {
-            if (i < m_line.length())
+            if (m_labelMemoryMap.contains(token))
+            {
+                throw std::runtime_error(std::format("Found duplicate label on line {}. Label {} is already defined on line {}.", lineNr,
+                                                     std::string_view{token}.substr(0, token.length() - 1), m_labelMemoryMap[token].line));
+            }
+
+            m_labelMemoryMap[token] = Label{.addr = memPointer, .line = lineNr};
+
+            std::println("IT'S A LABEL: {}", m_labelMemoryMap.at(token).addr);
+
+            if (i < line.length())
             {
                 i++; // Move cursor forward by one char, as we ended on ':'
             }
 
-            while (i < m_line.length() && (Parser::isWhitespace(m_line[i])))
+            while (i < line.length() && (Parser::isWhitespace(line[i])))
             {
                 i++;
             }
 
             // Continue to avoid incrementing the memory pointer, but only if it's a standalone label (on its own line)
-            if (i == m_line.length() || Parser::isComment(m_line[i]))
+            if (i == line.length() || Parser::isComment(line[i]))
+            {
+                continue;
+            }
+
+            // TODO: It would make sense to do semantic checks here in the first pass too to have feedback and stop the process earlier
+        }
+
+        memPointer += 2;
+    }
+}
+
+std::vector<Instruction> Parser::parseInstructions()
+{
+    std::vector<Instruction> out;
+
+    for (auto lineIter : m_lines | std::views::split('\n'))
+    {
+        m_lineNr++;
+
+        std::string_view line{lineIter};
+
+        size_t i = 0;
+
+        if (line.empty())
+        {
+            continue;
+        }
+
+        if (line.back() == '\r')
+        {
+            line.remove_suffix(1);
+        }
+
+        while (i < line.length() && (Parser::isWhitespace(line[i]) || Parser::isArgSeparator(line[i])))
+        {
+            i++;
+        }
+
+        if (i == line.length() || Parser::isComment(line[i]))
+        {
+            continue;
+        }
+
+        size_t start = i;
+
+        while (i < line.length() && !Parser::isWhitespace(line[i]) && !Parser::isComment(line[i]) && !Parser::isArgSeparator(line[i]) && line[i] != ':')
+        {
+            i++;
+        }
+
+        if (i < line.length() && line[i] == ':')
+        {
+            if (i < line.length())
+            {
+                i++; // Move cursor forward by one char, as we ended on ':'
+            }
+
+            while (i < line.length() && (Parser::isWhitespace(line[i])))
+            {
+                i++;
+            }
+
+            // Continue to avoid incrementing the memory pointer, but only if it's a standalone label (on its own line)
+            if (i == line.length() || Parser::isComment(line[i]))
             {
                 continue;
             }
 
             start = i; // Move start to the current position, skipping the label
 
-            while (i < m_line.length() && !Parser::isWhitespace(m_line[i]) && !Parser::isComment(m_line[i]) && !Parser::isArgSeparator(m_line[i]) &&
-                   m_line[i] != ':')
+            while (i < line.length() && !Parser::isWhitespace(line[i]) && !Parser::isComment(line[i]) && !Parser::isArgSeparator(line[i]) && line[i] != ':')
             {
                 i++;
             }
@@ -94,26 +170,26 @@ Parser::Parser(const std::string& inPath) : m_fi{inPath}, m_lineNr{0}
             // TODO: Add check if i > start?
         }
 
-        auto mnem = std::string_view{m_line}.substr(start, i - start);
+        auto mnem = line.substr(start, i - start);
 
         std::vector<std::string_view> rawOps{};
 
-        while (i < m_line.length())
+        while (i < line.length())
         {
             // We may have ended on a space/tab/comma above
-            while (i < m_line.length() && (Parser::isWhitespace(m_line[i]) || Parser::isArgSeparator(m_line[i])))
+            while (i < line.length() && (Parser::isWhitespace(line[i]) || Parser::isArgSeparator(line[i])))
             {
                 i++;
             }
 
-            if (i >= m_line.length())
+            if (i >= line.length())
             {
                 std::println("End of line reached while parsing ops");
 
                 break;
             }
 
-            if (Parser::isComment(m_line[i]))
+            if (Parser::isComment(line[i]))
             {
                 std::println("Found comment, stopping parsing line {}", m_lineNr);
 
@@ -121,12 +197,12 @@ Parser::Parser(const std::string& inPath) : m_fi{inPath}, m_lineNr{0}
             }
 
             auto opStart = i;
-            while (i < m_line.length() && !Parser::isWhitespace(m_line[i]) && !Parser::isComment(m_line[i]) && !Parser::isArgSeparator(m_line[i]))
+            while (i < line.length() && !Parser::isWhitespace(line[i]) && !Parser::isComment(line[i]) && !Parser::isArgSeparator(line[i]))
             {
                 i++;
             }
 
-            auto op = std::string_view{m_line}.substr(opStart, i - opStart);
+            auto op = line.substr(opStart, i - opStart);
 
             rawOps.push_back(op);
         }
@@ -135,10 +211,10 @@ Parser::Parser(const std::string& inPath) : m_fi{inPath}, m_lineNr{0}
 
         std::println("Final hex: {:x}", parsedInstruction.encodedHex);
 
-        return parsedInstruction;
+        out.push_back(parsedInstruction);
     }
 
-    return {};
+    return out;
 }
 
 bool Parser::isWhitespace(char c)
@@ -394,10 +470,10 @@ Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::str
                     // Labels can only be used as address placeholders
                     // Check if label map contains the literal and if so,
                     // turn the label into the assigned address
-                    if (labelMemoryMap.contains(str))
+                    if (m_labelMemoryMap.contains(str))
                     {
-                        parsedOpValues[i] = labelMemoryMap[str].addr;
-                        rawHex |= labelMemoryMap[str].addr;
+                        parsedOpValues[i] = m_labelMemoryMap[str].addr;
+                        rawHex |= m_labelMemoryMap[str].addr;
 
                         break;
                     }

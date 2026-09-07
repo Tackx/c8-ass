@@ -1,30 +1,39 @@
 #pragma once
 
 #include <cstddef>
-#include <fstream>
-#include <optional>
+#include <cstdint>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 #include "instruction.h"
 
 namespace ass
 {
+struct Label
+{
+    uint16_t addr;
+    size_t line;
+};
+
 class Parser
 {
   public:
-    Parser(const std::string& inPath);
+    Parser(std::string_view lines);
 
-    std::optional<Instruction> parseLine();
+    void parseLabels(std::string_view textContent);
+    std::vector<Instruction> parseInstructions();
+
+    // Static helpers
     static bool isWhitespace(char c);
     static bool isComment(char c);
     static bool isArgSeparator(char c);
 
   private:
-    std::ifstream m_fi;
-    std::string m_line;
+    std::string_view m_lines;
     std::size_t m_lineNr;
+    std::unordered_map<std::string, Label> m_labelMemoryMap;
 
     Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view> rawArgs);
 };

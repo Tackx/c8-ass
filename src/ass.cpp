@@ -2,7 +2,6 @@
 #include <format>
 #include <fstream>
 #include <ios>
-#include <optional>
 #include <print>
 #include <sstream>
 #include <stdexcept>
@@ -12,30 +11,9 @@
 
 #include "ass.h"
 #include "emitter.h"
-#include "label.h"
 #include "parser.h"
 
 using namespace ass;
-
-int emitCode(char** args)
-{
-    Parser parser{args[1]};
-    Emitter emitter{args[2]};
-
-    while (true)
-    {
-        auto parsedInstruction = parser.parseLine();
-
-        if (!parsedInstruction.has_value())
-        {
-            break;
-        }
-
-        emitter.emit(*parsedInstruction);
-    }
-
-    return 0;
-}
 
 int ass::assemble(int argc, char** args)
 {
@@ -72,19 +50,19 @@ int ass::assemble(int argc, char** args)
 
     try
     {
-        int r = 0;
+        Parser parser{fileContent};
+        Emitter emitter{args[2]};
+
         // First pass, which only parses and stores labels + their memory addresses
         // for substitution in second pass
-        r = parseLabels(fileContent);
-        if (r != 0)
-        {
-            return r;
-        }
+        parser.parseLabels(fileContent);
 
         // Second pass
-        r = emitCode(args);
+        auto parsedInstructions = parser.parseInstructions();
 
-        return r;
+        emitter.emit(parsedInstructions);
+
+        return 0;
     }
     catch (const std::exception& e)
     {

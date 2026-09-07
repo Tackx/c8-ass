@@ -2,6 +2,7 @@
 #include <ios>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "emitter.h"
 #include "instruction.h"
@@ -17,10 +18,13 @@ Emitter::Emitter(const std::string& outPath) : m_fo{outPath, std::ios_base::bina
     }
 }
 
-void Emitter::emit(const Instruction& instruction)
+void Emitter::emit(const std::vector<Instruction>& instructions)
 {
-    m_fo.put(static_cast<char>(instruction.encodedHex >> 8));
-    m_fo.put(static_cast<char>(instruction.encodedHex & 0xFF));
+    for (const auto& instruction : instructions)
+    {
+        m_fo.put(static_cast<char>(instruction.encodedHex >> 8));
+        m_fo.put(static_cast<char>(instruction.encodedHex & 0xFF));
+    }
 }
 
 } // namespace ass
