@@ -26,14 +26,13 @@ class Parser
 
     void parseLabels(std::string_view textContent);
     std::vector<Instruction> parseInstructions(const std::vector<Token>& tokens);
-    std::vector<Instruction> parseInstructions();
 
   private:
     std::string_view m_lines;
     std::size_t m_lineNr;
     std::unordered_map<std::string, Label> m_labelMemoryMap;
 
-    Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view> rawArgs);
+    Instruction parseInstruction(std::string_view mnem, const std::vector<Token>& args);
 };
 
 } // namespace ass

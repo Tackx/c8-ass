@@ -109,7 +109,7 @@ std::vector<Instruction> Parser::parseInstructions(const std::vector<Token>& tok
     std::vector<Instruction> out;
 
     std::string_view mnem{};
-    std::vector<std::string_view> rawArgs{};
+    std::vector<Token> rawArgs{};
 
     // Is this the first identifier of a line?
     // If so, it's either a label or a mnemonic
@@ -132,7 +132,7 @@ std::vector<Instruction> Parser::parseInstructions(const std::vector<Token>& tok
         else if (token.type == TokenType::Identifier || token.type == TokenType::Number)
         {
             // It's an arg
-            rawArgs.push_back(token.text);
+            rawArgs.push_back(token);
         }
         else if (token.type == TokenType::Newline && mnem != "")
         {
@@ -160,10 +160,9 @@ std::vector<Instruction> Parser::parseInstructions(const std::vector<Token>& tok
     return out;
 }
 
-// TODO: Rewrite to take a vector of Token structs instead of the raw strings
-Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::string_view> rawArgs)
+Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<Token>& args)
 {
-    if (rawArgs.size() > 3)
+    if (args.size() > 3)
     {
         throw std::runtime_error("Too many arguments");
     }
@@ -172,77 +171,61 @@ Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::str
     // Needed so we know how to parse the values down the line
     std::array<Operand, 3> parsedOperandTypes{};
 
-    if (rawArgs.size() > 0)
+    if (args.size() > 0)
     {
-        for (size_t i = 0; i < rawArgs.size(); i++)
+        for (size_t i = 0; i < args.size(); i++)
         {
 
-            auto op = rawArgs[i];
+            auto token = args[i];
 
-            if (op == "[I]" || op == "[i]")
+            // [i] || [I]
+            if (token.type == TokenType::LBracket && i + 2 < args.size() && args[i + 1].type == TokenType::Identifier &&
+                (args[i + 1].text == "I" || args[i + 1].text == "i") && args[i + 2].type == TokenType::RBracket)
             {
                 parsedOperandTypes[i] = {ArgType::I_MEM};
 
-                continue;
+                i += 2; // Skip the next 2 tokens
             }
 
-            if (op == "I" || op == "i")
+            else if (token.type == TokenType::Identifier && (token.text == "I" || token.text == "i"))
             {
                 parsedOperandTypes[i] = {ArgType::I_REG};
-
-                continue;
             }
 
-            // if (op == "V0" || op == "v0")
-            // {
-            //     parsedOperands[i] = {ArgType::V0};
-
-            //     continue;
-            // }
-
-            if (op.starts_with("V") || op.starts_with("v"))
+            else if (token.type == TokenType::Identifier && (token.text.starts_with("V") || token.text.starts_with("v")))
             {
                 parsedOperandTypes[i] = {ArgType::REGISTER};
-
-                continue;
             }
 
-            if (op == "DT" || op == "dt")
+            else if (token.type == TokenType::Identifier && (token.text == "DT" || token.text == "dt"))
             {
                 parsedOperandTypes[i] = {ArgType::DT};
-
-                continue;
             }
 
-            if (op == "K" || op == "k")
+            else if (token.type == TokenType::Identifier && (token.text == "K" || token.text == "k"))
             {
                 parsedOperandTypes[i] = {ArgType::KEY};
-
-                continue;
             }
 
-            if (op == "ST" || op == "st")
+            else if (token.type == TokenType::Identifier && (token.text == "ST" || token.text == "st"))
             {
                 parsedOperandTypes[i] = {ArgType::ST};
-
-                continue;
             }
 
-            if (op == "LF" || op == "lf" || op == "F" || op == "f")
+            else if (token.type == TokenType::Identifier && (token.text == "LF" || token.text == "lf" || token.text == "F" || token.text == "f"))
             {
                 parsedOperandTypes[i] = {ArgType::FONT};
-
-                continue;
             }
 
-            if (op == "B" || op == "b")
+            else if (token.type == TokenType::Identifier && (token.text == "B" || token.text == "b"))
             {
                 parsedOperandTypes[i] = {ArgType::BCD};
-
-                continue;
             }
 
-            parsedOperandTypes[i] = {ArgType::LITERAL};
+            else
+            {
+                parsedOperandTypes[i] = {ArgType::LITERAL};
+            }
         }
     }
 
@@ -255,7 +238,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::str
                                               return false;
                                           }
 
-                                          if (rawArgs.size() != instr.operandCount)
+                                          if (args.size() != instr.operandCount)
                                           {
                                               return false;
                                           }
@@ -296,7 +279,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::str
             auto sourceValueBase = 10;
             // uint8_t
 
-            std::string str{rawArgs[i]};
+            std::string str{args[i].text};
             if (str.starts_with("0x"))
             {
                 sourceValueBase = 16;
