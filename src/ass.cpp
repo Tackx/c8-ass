@@ -56,7 +56,6 @@ int assemble(int argc, char** args)
         Parser parser{fileContent};
         Emitter emitter{args[2]};
 
-        // TODO: Hook it up to the parser. Right now this is for debugging only
         auto tokens = lexer.getTokens();
 
         // First pass, which only parses and stores labels + their memory addresses
