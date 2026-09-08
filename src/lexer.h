@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstddef>
 #include <string_view>
 #include <vector>
@@ -31,6 +33,11 @@ class Lexer
     Lexer(std::string_view fileContent);
 
     std::vector<Token> getTokens();
+
+    // Static helpers
+    static bool isWhitespace(char c);
+    static bool isComment(char c);
+    static bool isArgSeparator(char c);
 
   private:
     std::string_view m_text;

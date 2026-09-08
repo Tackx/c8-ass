@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "instruction.h"
+#include "lexer.h"
 
 namespace ass
 {
@@ -24,12 +25,8 @@ class Parser
     Parser(std::string_view lines);
 
     void parseLabels(std::string_view textContent);
+    std::vector<Instruction> parseInstructions(const std::vector<Token>& tokens);
     std::vector<Instruction> parseInstructions();
-
-    // Static helpers
-    static bool isWhitespace(char c);
-    static bool isComment(char c);
-    static bool isArgSeparator(char c);
 
   private:
     std::string_view m_lines;

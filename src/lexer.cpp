@@ -10,6 +10,21 @@ namespace ass
 
 Lexer::Lexer(std::string_view fileContent) : m_text{fileContent}, m_cursor{0}, m_line{1}, m_col{1} {};
 
+bool Lexer::isWhitespace(char c)
+{
+    return c == ' ' || c == '\t';
+}
+
+bool Lexer::isComment(char c)
+{
+    return c == ';';
+}
+
+bool Lexer::isArgSeparator(char c)
+{
+    return c == ',';
+}
+
 std::vector<Token> Lexer::getTokens()
 {
     std::vector<Token> out;
@@ -36,7 +51,7 @@ std::vector<Token> Lexer::getTokens()
 
             continue;
         }
-        else if (m_text[m_cursor] == ' ')
+        else if (isWhitespace(m_text[m_cursor]))
         {
             m_cursor++;
             m_col++;
@@ -44,7 +59,7 @@ std::vector<Token> Lexer::getTokens()
             continue;
         }
 
-        else if (m_text[m_cursor] == ';')
+        else if (isComment(m_text[m_cursor]))
         {
             while (m_cursor < m_text.length() && m_text[m_cursor] != '\n')
             {
@@ -54,7 +69,7 @@ std::vector<Token> Lexer::getTokens()
 
             continue;
         }
-        else if (m_text[m_cursor] == ',')
+        else if (isArgSeparator(m_text[m_cursor]))
         {
             t.type = TokenType::Comma;
 
@@ -135,10 +150,12 @@ std::vector<Token> Lexer::getTokens()
             m_cursor++;
             m_col++;
 
-            // TODO: Use the static helpers from Parser
-            while (m_cursor < m_text.length() && m_text[m_cursor] != ' ' && m_text[m_cursor] != '\n' && m_text[m_cursor] != '\r' && m_text[m_cursor] != ':' &&
-                   m_text[m_cursor] != ',' && m_text[m_cursor] != ';' && m_text[m_cursor] != ']')
+            while (m_cursor < m_text.length() && !isWhitespace(m_text[m_cursor]) && m_text[m_cursor] != '\n' && m_text[m_cursor] != '\r' &&
+                   m_text[m_cursor] != ':' && !isArgSeparator(m_text[m_cursor]) && !isComment(m_text[m_cursor]) && m_text[m_cursor] != '[' &&
+                   m_text[m_cursor] != ']')
             {
+                // TODO: Check for L/R brackets and throw if present?
+
                 m_cursor++; // Move the cursor
                 m_col++;
             }

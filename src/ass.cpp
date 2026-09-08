@@ -64,7 +64,7 @@ int assemble(int argc, char** args)
         parser.parseLabels(fileContent);
 
         // Second pass
-        auto parsedInstructions = parser.parseInstructions();
+        auto parsedInstructions = parser.parseInstructions(tokens);
 
         emitter.emit(parsedInstructions);
 

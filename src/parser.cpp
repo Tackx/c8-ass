@@ -1,12 +1,9 @@
-#include "parser.h"
-#include "instruction.h"
 #include <algorithm>
 #include <array>
 #include <charconv>
 #include <cstddef>
 #include <cstdint>
 #include <format>
-#include <optional>
 #include <print>
 #include <ranges>
 #include <stdexcept>
@@ -16,6 +13,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include "instruction.h"
+#include "lexer.h"
+#include "parser.h"
 #include "util.h"
 
 namespace ass
@@ -25,6 +25,7 @@ Parser::Parser(std::string_view lines) : m_lines{lines}, m_lineNr{0}
 {
 }
 
+// TODO: Rewrite to accept std::vector<Token>
 void Parser::parseLabels(std::string_view textContent)
 {
     uint16_t memPointer{0x200};
@@ -48,12 +49,12 @@ void Parser::parseLabels(std::string_view textContent)
             line.remove_suffix(1);
         }
 
-        while (i < line.length() && (Parser::isWhitespace(line[i]) || Parser::isArgSeparator(line[i])))
+        while (i < line.length() && (Lexer::isWhitespace(line[i]) || Lexer::isArgSeparator(line[i])))
         {
             i++;
         }
 
-        if (i == line.length() || Parser::isComment(line[i]))
+        if (i == line.length() || Lexer::isComment(line[i]))
         {
             continue;
         }
@@ -61,7 +62,7 @@ void Parser::parseLabels(std::string_view textContent)
         size_t start = i;
 
         // TODO: Add another static helper isLabelEnd
-        while (i < line.length() && !Parser::isWhitespace(line[i]) && !Parser::isComment(line[i]) && !Parser::isArgSeparator(line[i]) && line[i] != ':')
+        while (i < line.length() && !Lexer::isWhitespace(line[i]) && !Lexer::isComment(line[i]) && !Lexer::isArgSeparator(line[i]) && line[i] != ':')
         {
             i++;
         }
@@ -85,13 +86,13 @@ void Parser::parseLabels(std::string_view textContent)
                 i++; // Move cursor forward by one char, as we ended on ':'
             }
 
-            while (i < line.length() && (Parser::isWhitespace(line[i])))
+            while (i < line.length() && (Lexer::isWhitespace(line[i])))
             {
                 i++;
             }
 
             // Continue to avoid incrementing the memory pointer, but only if it's a standalone label (on its own line)
-            if (i == line.length() || Parser::isComment(line[i]))
+            if (i == line.length() || Lexer::isComment(line[i]))
             {
                 continue;
             }
@@ -103,135 +104,63 @@ void Parser::parseLabels(std::string_view textContent)
     }
 }
 
-std::vector<Instruction> Parser::parseInstructions()
+std::vector<Instruction> Parser::parseInstructions(const std::vector<Token>& tokens)
 {
     std::vector<Instruction> out;
 
-    for (auto lineIter : m_lines | std::views::split('\n'))
+    std::string_view mnem{};
+    std::vector<std::string_view> rawArgs{};
+
+    // Is this the first identifier of a line?
+    // If so, it's either a label or a mnemonic
+    bool firstIdentifier = true;
+
+    for (size_t i = 0; i < tokens.size(); i++)
     {
-        m_lineNr++;
+        const auto& token = tokens[i];
 
-        std::string_view line{lineIter};
-
-        size_t i = 0;
-
-        if (line.empty())
+        if (i + 1 < tokens.size() && token.type == TokenType::Identifier && tokens[i + 1].type == TokenType::Colon)
         {
+            // It's a label, skip both tokens (labels are processed in the first pass)
+            i++;
+        }
+        else if (token.type == TokenType::Identifier && firstIdentifier)
+        {
+            // It's a mnemonic
+            mnem = token.text;
+        }
+        else if (token.type == TokenType::Identifier || token.type == TokenType::Number)
+        {
+            // It's an arg
+            rawArgs.push_back(token.text);
+        }
+        else if (token.type == TokenType::Newline && mnem != "")
+        {
+            auto instr = parseInstruction(mnem, rawArgs);
+            out.push_back(instr);
+
+            mnem = "";
+            rawArgs = {};
+            firstIdentifier = true;
+
+            continue;
+        }
+        else if (token.type == TokenType::Newline)
+        {
+            firstIdentifier = true;
+
             continue;
         }
 
-        if (line.back() == '\r')
-        {
-            line.remove_suffix(1);
-        }
+        firstIdentifier = false;
 
-        while (i < line.length() && (Parser::isWhitespace(line[i]) || Parser::isArgSeparator(line[i])))
-        {
-            i++;
-        }
-
-        if (i == line.length() || Parser::isComment(line[i]))
-        {
-            continue;
-        }
-
-        size_t start = i;
-
-        while (i < line.length() && !Parser::isWhitespace(line[i]) && !Parser::isComment(line[i]) && !Parser::isArgSeparator(line[i]) && line[i] != ':')
-        {
-            i++;
-        }
-
-        if (i < line.length() && line[i] == ':')
-        {
-            if (i < line.length())
-            {
-                i++; // Move cursor forward by one char, as we ended on ':'
-            }
-
-            while (i < line.length() && (Parser::isWhitespace(line[i])))
-            {
-                i++;
-            }
-
-            // Continue to avoid incrementing the memory pointer, but only if it's a standalone label (on its own line)
-            if (i == line.length() || Parser::isComment(line[i]))
-            {
-                continue;
-            }
-
-            start = i; // Move start to the current position, skipping the label
-
-            while (i < line.length() && !Parser::isWhitespace(line[i]) && !Parser::isComment(line[i]) && !Parser::isArgSeparator(line[i]) && line[i] != ':')
-            {
-                i++;
-            }
-
-            // TODO: Add check if i > start?
-        }
-
-        auto mnem = line.substr(start, i - start);
-
-        std::vector<std::string_view> rawOps{};
-
-        while (i < line.length())
-        {
-            // We may have ended on a space/tab/comma above
-            while (i < line.length() && (Parser::isWhitespace(line[i]) || Parser::isArgSeparator(line[i])))
-            {
-                i++;
-            }
-
-            if (i >= line.length())
-            {
-                std::println("End of line reached while parsing ops");
-
-                break;
-            }
-
-            if (Parser::isComment(line[i]))
-            {
-                std::println("Found comment, stopping parsing line {}", m_lineNr);
-
-                break;
-            }
-
-            auto opStart = i;
-            while (i < line.length() && !Parser::isWhitespace(line[i]) && !Parser::isComment(line[i]) && !Parser::isArgSeparator(line[i]))
-            {
-                i++;
-            }
-
-            auto op = line.substr(opStart, i - opStart);
-
-            rawOps.push_back(op);
-        }
-
-        auto parsedInstruction = this->parseInstruction(mnem, rawOps);
-
-        std::println("Final hex: {:x}", parsedInstruction.encodedHex);
-
-        out.push_back(parsedInstruction);
+        // TODO: Do we care about the end token?
     }
 
     return out;
 }
 
-bool Parser::isWhitespace(char c)
-{
-    return c == ' ' || c == '\t';
-}
-
-bool Parser::isComment(char c)
-{
-    return c == ';';
-}
-
-bool Parser::isArgSeparator(char c)
-{
-    return c == ',';
-}
-
+// TODO: Rewrite to take a vector of Token structs instead of the raw strings
 Instruction Parser::parseInstruction(std::string_view mnem, std::vector<std::string_view> rawArgs)
 {
     if (rawArgs.size() > 3)
