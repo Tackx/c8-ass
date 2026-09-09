@@ -60,7 +60,7 @@ int assemble(int argc, char** args)
 
         // First pass, which only parses and stores labels + their memory addresses
         // for substitution in second pass
-        parser.parseLabels(fileContent);
+        parser.parseLabels(tokens);
 
         // Second pass
         auto parsedInstructions = parser.parseInstructions(tokens);

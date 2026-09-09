@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <format>
 #include <print>
-#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -25,82 +24,50 @@ Parser::Parser(std::string_view lines) : m_lines{lines}, m_lineNr{0}
 {
 }
 
-// TODO: Rewrite to accept std::vector<Token>
-void Parser::parseLabels(std::string_view textContent)
+void Parser::parseLabels(const std::vector<Token>& tokens)
 {
     uint16_t memPointer{0x200};
 
-    size_t lineNr = 0;
-    for (auto str : textContent | std::views::split('\n'))
+    for (size_t i = 0; i < tokens.size(); i++)
     {
-        lineNr++;
+        const auto& token = tokens[i];
 
-        std::string_view line{str};
-
-        size_t i = 0;
-
-        if (line.empty())
+        if (token.type == TokenType::Identifier && i + 1 < tokens.size() && tokens[i + 1].type == TokenType::Colon)
         {
-            continue;
-        }
+            // It's a label
+            const auto& key = std::string{token.text};
 
-        if (line.back() == '\r')
-        {
-            line.remove_suffix(1);
-        }
-
-        while (i < line.length() && (Lexer::isWhitespace(line[i]) || Lexer::isArgSeparator(line[i])))
-        {
-            i++;
-        }
-
-        if (i == line.length() || Lexer::isComment(line[i]))
-        {
-            continue;
-        }
-
-        size_t start = i;
-
-        // TODO: Add another static helper isLabelEnd
-        while (i < line.length() && !Lexer::isWhitespace(line[i]) && !Lexer::isComment(line[i]) && !Lexer::isArgSeparator(line[i]) && line[i] != ':')
-        {
-            i++;
-        }
-
-        std::string token{line.substr(start, i - start)};
-
-        if (i < line.length() && line[i] == ':')
-        {
-            if (m_labelMemoryMap.contains(token))
+            if (m_labelMemoryMap.contains(key))
             {
-                throw std::runtime_error(std::format("Found duplicate label on line {}. Label {} is already defined on line {}.", lineNr,
-                                                     std::string_view{token}.substr(0, token.length() - 1), m_labelMemoryMap[token].line));
+                throw std::runtime_error(std::format("Found duplicate label on line {}:{}. Label {} is already defined on line {}.", token.line, token.col,
+                                                     token.text.substr(0, token.text.length() - 1), m_labelMemoryMap[key].line));
             }
 
-            m_labelMemoryMap[token] = Label{.addr = memPointer, .line = lineNr};
+            m_labelMemoryMap[key] = Label{.addr = memPointer, .line = token.line};
 
-            std::println("IT'S A LABEL: {}", m_labelMemoryMap.at(token).addr);
+            std::println("IT'S A LABEL: {}", m_labelMemoryMap.at(key).addr);
 
-            if (i < line.length())
+            i++; // Skip the colon
+
+            if (i + 1 < tokens.size() && tokens[i + 1].type == TokenType::Newline)
             {
-                i++; // Move cursor forward by one char, as we ended on ':'
-            }
+                i++; // Skip the newline
 
-            while (i < line.length() && (Lexer::isWhitespace(line[i])))
-            {
-                i++;
-            }
-
-            // Continue to avoid incrementing the memory pointer, but only if it's a standalone label (on its own line)
-            if (i == line.length() || Lexer::isComment(line[i]))
-            {
                 continue;
             }
-
-            // TODO: It would make sense to do semantic checks here in the first pass too to have feedback and stop the process earlier
+            else
+            {
+                memPointer += 2;
+            }
         }
 
-        memPointer += 2;
+        // If the previous token is not a newline and this one is, increment the pointer
+        if (i > 0 && tokens[i - 1].type != TokenType::Newline && token.type == TokenType::Newline)
+        {
+            memPointer += 2;
+        }
+
+        // TODO: It would make sense to do semantic checks here in the first pass too to have feedback and stop the process earlier
     }
 }
 

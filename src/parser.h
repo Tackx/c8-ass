@@ -24,7 +24,7 @@ class Parser
   public:
     Parser(std::string_view lines);
 
-    void parseLabels(std::string_view textContent);
+    void parseLabels(const std::vector<Token>& tokens);
     std::vector<Instruction> parseInstructions(const std::vector<Token>& tokens);
 
   private:

@@ -6,5 +6,6 @@ Custom CHIP-8 assembler (WIP)
 
 ## TODO
 
-- [ ] Read the whole file into memory at once to avoid reading it over twice
-- [ ] Split Parser into a Lexer and a Parser
+- [ ] More validations
+- [ ] Error handling
+- [ ] Refactor
