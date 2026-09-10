@@ -22,7 +22,7 @@
             "windows": {
                 "program": "${workspaceFolder}/build/ass.exe",
                 "miDebuggerPath": "gdb.exe",
-                "args": ["test.ass", "output.ch8"]
+                "args": ["test.ass"]
             },
             "osx": {
                 "program": "${workspaceFolder}/build/ass",

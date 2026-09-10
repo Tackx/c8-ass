@@ -1,5 +1,6 @@
 {
     "C_Cpp.intelliSenseEngine": "disabled",
     "cmake.buildDirectory": "${workspaceFolder}/build",
-    "debug.onTaskErrors": "debugAnyway"
+    "debug.onTaskErrors": "debugAnyway",
+    "clangd.arguments": ["--query-driver=C:/msys64/mingw64/bin/g++.exe"]
 }

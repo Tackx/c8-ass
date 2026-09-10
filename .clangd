@@ -4,3 +4,4 @@ Diagnostics:
 
 CompileFlags:
   CompilationDatabase: build
+  Add: [--target=x86_64-w64-mingw32]
