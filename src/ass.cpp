@@ -1,13 +1,23 @@
+#include <cstdio>
 #include <exception>
 #include <format>
 #include <fstream>
 #include <ios>
+#include <iostream>
 #include <print>
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <string_view>
 #include <utility>
+
+#ifdef _WIN32
+#include <io.h>
+#include <stdio.h>
+#define isatty _isatty
+#define fileno _fileno
+#else
+#include <unistd.h>
+#endif
 
 #include "ass.h"
 #include "emitter.h"
@@ -19,41 +29,47 @@ namespace ass
 
 int assemble(int argc, char** args)
 {
-    static constexpr std::string_view USAGE_MSG = "Usage: ass INPUT OUTPUT";
+    static constexpr auto USAGE_MSG = "Usage: ass INPUT OUTPUT";
+    static constexpr auto DEFAULT_OUT_PATH = "./output.ch8";
 
-    // TODO: Enable reading from a redirected stream
-    // TODO2: Enable specifying output path as a flag (-o)
-
-    if (argc <= 2)
-    {
-        if (argc <= 1)
-        {
-            // TODO: Try to read from stdin?
-            std::println("Missing input path.");
-        }
-
-        std::println("{}", USAGE_MSG);
-
-        return 1;
-    }
-
+    // TODO: Enable specifying output path as a flag (-o)
     try
     {
         std::stringstream buffer;
-        {
-            std::ifstream t(args[1], std::ios::binary);
-            if (!t)
-            {
-                throw std::runtime_error("Failed to open file.");
-            }
+        std::string fileContent;
 
-            buffer << t.rdbuf();
+        if (argc <= 1 && isatty(fileno(stdin)))
+        {
+            std::println("{}", USAGE_MSG);
+
+            throw std::runtime_error("No input file path provided.");
         }
 
-        auto fileContent = std::move(buffer).str();
+        else if (argc >= 2)
+        {
+            // Try to load input from args[1]
+            {
+                std::ifstream t(args[1], std::ios::binary);
+                if (!t)
+                {
+                    throw std::runtime_error("Failed to open file.");
+                }
+
+                buffer << t.rdbuf();
+            }
+        }
+
+        else if (argc >= 1)
+        {
+            // Try to load input from stdin
+            buffer << std::cin.rdbuf();
+        }
+
+        fileContent = std::move(buffer).str();
+
         Lexer lexer{fileContent};
         Parser parser{fileContent};
-        Emitter emitter{args[2]};
+        Emitter emitter{DEFAULT_OUT_PATH};
 
         auto tokens = lexer.getTokens();
 
