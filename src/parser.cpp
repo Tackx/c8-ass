@@ -20,7 +20,7 @@
 namespace ass
 {
 
-Parser::Parser(std::string_view lines) : m_lines{lines}, m_lineNr{0}
+Parser::Parser()
 {
 }
 
@@ -159,9 +159,15 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
                 parsedOperandTypes[i] = {ArgType::I_REG};
             }
 
+            else if (token.type == TokenType::Identifier && (token.text.starts_with("V") || token.text.starts_with("v")) && i > 0 &&
+                     parsedOperandTypes[i - 1].argType == ArgType::REGISTER_X)
+            {
+                parsedOperandTypes[i] = {ArgType::REGISTER_Y};
+            }
+
             else if (token.type == TokenType::Identifier && (token.text.starts_with("V") || token.text.starts_with("v")))
             {
-                parsedOperandTypes[i] = {ArgType::REGISTER};
+                parsedOperandTypes[i] = {ArgType::REGISTER_X};
             }
 
             else if (token.type == TokenType::Identifier && (token.text == "DT" || token.text == "dt"))
@@ -226,7 +232,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
 
     if (match == opTable.end())
     {
-        throw std::runtime_error(std::format("Failed to find mnemonic with matching operand kinds.\nLine: {}\nMnemonic: {}", m_lineNr, mnem));
+        throw std::runtime_error(std::format("Failed to find mnemonic with matching operand kinds.\nLine: {}\nMnemonic: {}", args[0].line, mnem));
     }
 
     InstructionDefinition instr = *match;
@@ -244,7 +250,6 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
         for (size_t i = 0; i < instr.operandCount; i++)
         {
             auto sourceValueBase = 10;
-            // uint8_t
 
             std::string str{args[i].text};
             if (str.starts_with("0x"))
@@ -258,7 +263,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
             case ArgType::NONE:
                 break;
 
-            case ArgType::REGISTER:
+            case ArgType::REGISTER_X:
             {
                 sourceValueBase = 16;
 
@@ -286,15 +291,40 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
 
                 parsedOpValues[i] = regNumber;
 
-                // TODO: This is ugly, divide ArgType::REGISTER into REGISTER_X and REGISTER_Y, each having its own case in this switch
-                if (i > 0 && instr.operands[i - 1].argType != ArgType::REGISTER)
+                rawHex |= regNumber << 8;
+
+                break;
+            }
+
+            case ArgType::REGISTER_Y:
+            {
+                sourceValueBase = 16;
+
+                if ((!str.starts_with("V") && !str.starts_with("v")) || str.length() != 2)
                 {
-                    rawHex |= regNumber << 8;
+                    throw std::runtime_error("Invalid register. Expected register name to start with 'V' and be in the Vx format.");
+
+                    break;
                 }
-                else
+
+                uint8_t regNumber;
+                auto err = std::from_chars(&str[1], &str[1] + 1, regNumber, sourceValueBase);
+
+                if (err.ec != std::errc{})
                 {
-                    rawHex |= regNumber << (8 - (4 * i));
+                    // TODO: Handle error
                 }
+
+                if (regNumber > 0xF)
+                {
+                    throw std::runtime_error("Invalid register number. Register number must be between 0 and F");
+
+                    break;
+                }
+
+                parsedOpValues[i] = regNumber;
+
+                rawHex |= regNumber << (8 - (4 * i));
 
                 break;
             }

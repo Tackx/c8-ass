@@ -47,8 +47,8 @@ int assemble(int argc, char** args)
 
         bool isFileInput = !isatty(fileno(stdin));
 
-        size_t lastFlagValueIndex{0};
         // Parse flags
+        size_t lastFlagValueIndex{0};
         for (size_t i = 1; i < (size_t)argc; i++)
         {
             std::string_view arg = args[i];
@@ -124,7 +124,7 @@ int assemble(int argc, char** args)
         fileContent = std::move(buffer).str();
 
         Lexer lexer{fileContent};
-        Parser parser{fileContent};
+        Parser parser{};
         Emitter emitter{outPath};
 
         auto tokens = lexer.getTokens();

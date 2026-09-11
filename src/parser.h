@@ -22,14 +22,12 @@ struct Label
 class Parser
 {
   public:
-    Parser(std::string_view lines);
+    Parser();
 
     void parseLabels(const std::vector<Token>& tokens);
     std::vector<Instruction> parseInstructions(const std::vector<Token>& tokens);
 
   private:
-    std::string_view m_lines;
-    std::size_t m_lineNr;
     std::unordered_map<std::string, Label> m_labelMemoryMap;
 
     Instruction parseInstruction(std::string_view mnem, const std::vector<Token>& args);
