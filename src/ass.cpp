@@ -47,54 +47,56 @@ int assemble(int argc, char** args)
 
         bool isFileInput = !isatty(fileno(stdin));
 
-        switch (argc)
+        size_t lastFlagValueIndex{0};
+        // Parse flags
+        for (size_t i = 1; i < (size_t)argc; i++)
         {
-        case 2:
-        {
-            // TODO: Validate the arg is not a flag (since it does not make sense to only have a dangling flag)
+            std::string_view arg = args[i];
 
-            // Try to load input from args[1]
-            inPath = args[1];
-
-            break;
-        }
-
-        case 3:
-        {
-            // TODO: We need to make sure that the second arg is a (supported) flag and the third arg is a filepath and that we have a file input stream
-            std::string_view flag{args[1]};
-            std::string_view arg{args[2]};
-
-            if (flag != "-o")
+            if (arg.starts_with("-"))
             {
-                throw std::runtime_error(std::format("Unsupported flag {}", flag));
+                // It's a flag
+                if (arg != "-o")
+                {
+                    throw std::runtime_error(std::format("Unsupported flag {}", arg));
+                }
+
+                if (i + 1 >= (size_t)argc)
+                {
+                    throw std::runtime_error("Missing value for flag");
+                }
+
+                continue;
             }
 
-            outPath = arg;
-
-            break;
-        }
-
-        case 4:
-        {
-            std::string_view flag{args[1]};
-            std::string_view arg1{args[2]};
-            std::string_view arg2{args[3]};
-
-            if (flag != "-o")
+            if (argc > 2)
             {
-                throw std::runtime_error(std::format("Unsupported flag {}", flag));
+                // It's an argument (value of a flag)
+                // For now, there's only 1 supported flag
+                outPath = arg;
+                lastFlagValueIndex = i;
+
+                if (i + 1 < (size_t)argc)
+                {
+                    // If the next argument is not a flag, break out of parsing
+                    std::string_view nextArg = args[i + 1];
+
+                    if (!nextArg.starts_with("-"))
+                    {
+                        break;
+                    }
+                }
             }
-
-            outPath = arg1;
-            inPath = arg2;
-
-            break;
         }
 
-        default:
-            // Throw too many flags?
-            break;
+        if (lastFlagValueIndex + 1 < (size_t)argc)
+        {
+            std::string_view value = args[lastFlagValueIndex + 1];
+
+            if (!value.starts_with("-"))
+            {
+                inPath = value;
+            }
         }
 
         if (!inPath.empty())
@@ -102,7 +104,7 @@ int assemble(int argc, char** args)
             std::ifstream t(inPath, std::ios::binary);
             if (!t)
             {
-                throw std::runtime_error("Failed to open file.");
+                throw std::runtime_error("Failed to open file");
             }
 
             buffer << t.rdbuf();
@@ -116,7 +118,7 @@ int assemble(int argc, char** args)
         {
             std::println("{}", USAGE_MSG);
 
-            throw std::runtime_error("No input specified.");
+            throw std::runtime_error("No input specified");
         }
 
         fileContent = std::move(buffer).str();
