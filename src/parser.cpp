@@ -387,7 +387,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
                         break;
                     }
 
-                    // TODO: Add check if the value is numeric. If not, it's an invalid label.
+                    // TODO: Add check if the value is numeric. If not and it's not a valid label, it's an invalid address.
 
                     uint16_t value;
                     auto err = std::from_chars(&str[0], &str[0] + 5, value, sourceValueBase);
