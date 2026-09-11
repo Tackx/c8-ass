@@ -6,6 +6,7 @@ Custom CHIP-8 assembler (WIP)
 
 ## TODO
 
+- [ ] Go through TODOs
 - [ ] More validations
 - [ ] Error handling
 - [ ] Refactor
