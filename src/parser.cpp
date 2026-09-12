@@ -86,6 +86,11 @@ std::vector<Instruction> Parser::parseInstructions(const std::vector<Token>& tok
     {
         const auto& token = tokens[i];
 
+        if (token.type == TokenType::End)
+        {
+            break;
+        }
+
         if (i + 1 < tokens.size() && token.type == TokenType::Identifier && tokens[i + 1].type == TokenType::Colon)
         {
             // It's a label, skip both tokens (labels are processed in the first pass)
@@ -120,8 +125,6 @@ std::vector<Instruction> Parser::parseInstructions(const std::vector<Token>& tok
         }
 
         firstIdentifier = false;
-
-        // TODO: Do we care about the end token?
     }
 
     return out;
