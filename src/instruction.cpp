@@ -3,15 +3,14 @@
 namespace ass
 {
 
-// TODO: Implement as a method on the Operand struct?
-bool isCompatible(Operand first, Operand second)
+bool Operand::isCompatibleWith(const Operand& other)
 {
-    if (first.literalType.has_value() && second.literalType.has_value())
+    if (this->literalType.has_value() && other.literalType.has_value())
     {
-        return first.argType == second.argType && first.literalType == second.literalType;
+        return this->argType == other.argType && this->literalType == other.literalType;
     }
 
-    return first.argType == second.argType;
+    return this->argType == other.argType;
 }
 
 } // namespace ass

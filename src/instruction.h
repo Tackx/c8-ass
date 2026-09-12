@@ -39,6 +39,8 @@ struct Operand
 {
     ArgType argType{};
     std::optional<LiteralType> literalType{};
+
+    bool isCompatibleWith(const Operand& other);
 };
 
 struct InstructionDefinition

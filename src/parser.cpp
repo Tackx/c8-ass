@@ -142,11 +142,6 @@ uint8_t Parser::parseRegister(std::string_view registerString)
         throw std::runtime_error(std::format("Failed to parse register number: {}", std::make_error_code(err.ec).message()));
     }
 
-    if (regNumber > 0xF)
-    {
-        throw std::runtime_error("Invalid register number. Register number must be between 0 and F");
-    }
-
     return regNumber;
 }
 
@@ -242,7 +237,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
                                           bool compatible = true;
                                           for (size_t i = 0; i < instr.operandCount; i++)
                                           {
-                                              if (!isCompatible(parsedOperandTypes[i], instr.operands[i]))
+                                              if (!parsedOperandTypes[i].isCompatibleWith(instr.operands[i]))
                                               {
                                                   compatible = false;
 
