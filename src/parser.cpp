@@ -331,7 +331,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
                 auto regNumber = parseRegister(str);
                 parsedOpValues[i] = regNumber;
 
-                rawHex |= regNumber << (8 - (4 * i));
+                rawHex |= regNumber << 4;
 
                 break;
             }
