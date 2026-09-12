@@ -137,12 +137,31 @@ uint8_t Parser::parseRegister(std::string_view registerString)
     uint8_t regNumber;
     auto err = std::from_chars(&registerString[1], &registerString[1] + 1, regNumber, 16);
 
-    if (err.ec != std::errc{} || err.ptr != &registerString[1] + 1)
+    if (err.ec != std::errc{})
     {
-        throw std::runtime_error(std::format("Failed to parse register number: {}", std::make_error_code(err.ec).message()));
+        throw std::runtime_error(std::format("Failed to parse register number: {} {}", std::make_error_code(err.ec).message(), err.ptr));
     }
 
     return regNumber;
+}
+
+uint8_t Parser::parseValueN(std::string_view nString, uint8_t sourceValueBase)
+{
+    uint8_t value;
+    auto err = std::from_chars(nString.data(), nString.data() + nString.size(), value, sourceValueBase);
+
+    if (err.ec != std::errc{})
+    {
+        throw std::runtime_error(std::format("Failed to parse literal value (N): {}. Provided value: {}", std::make_error_code(err.ec).message(), nString));
+    }
+
+    if (value < 1 || value > 8)
+    {
+        throw std::runtime_error(std::format(
+            "Failed to parse value of type N. The value must be between 1 and 8 (as this is only used by the DRW instruction). Provided value: {}", value));
+    }
+
+    return value;
 }
 
 Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<Token>& args)
@@ -267,7 +286,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
     {
         for (size_t i = 0; i < instr.operandCount; i++)
         {
-            auto sourceValueBase = 10;
+            uint8_t sourceValueBase = 10;
 
             std::string str{args[i].text};
             if (str.starts_with("0x"))
@@ -312,15 +331,8 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
 
                 if (literalType == LiteralType::VALUE_N)
                 {
-                    uint8_t value;
-                    auto err = std::from_chars(&str[0], &str[0] + 2, value, sourceValueBase);
 
-                    if (err.ec != std::errc{})
-                    {
-                        // TODO: Handle error
-                    }
-
-                    // TODO: More validations.. (e.g. reject values > 15)
+                    auto value = parseValueN(str, sourceValueBase);
 
                     parsedOpValues[i] = value;
                     rawHex |= value;
