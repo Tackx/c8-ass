@@ -30,7 +30,10 @@ class Parser
   private:
     uint8_t parseRegister(std::string_view registerString);
 
-    uint8_t parseValueN(std::string_view nString, uint8_t sourceValueBase);
+    // Parses both N and NN values
+    uint8_t parseValue(std::string_view vString, uint8_t sourceValueBase);
+
+    uint16_t parseAddress(const std::string& aString, uint8_t sourceValueBase);
 
     std::unordered_map<std::string, Label> m_labelMemoryMap;
 

@@ -145,20 +145,33 @@ uint8_t Parser::parseRegister(std::string_view registerString)
     return regNumber;
 }
 
-uint8_t Parser::parseValueN(std::string_view nString, uint8_t sourceValueBase)
+uint8_t Parser::parseValue(std::string_view vString, uint8_t sourceValueBase)
 {
     uint8_t value;
-    auto err = std::from_chars(nString.data(), nString.data() + nString.size(), value, sourceValueBase);
+    auto err = std::from_chars(vString.data(), vString.data() + vString.size(), value, sourceValueBase);
 
     if (err.ec != std::errc{})
     {
-        throw std::runtime_error(std::format("Failed to parse literal value (N): {}. Provided value: {}", std::make_error_code(err.ec).message(), nString));
+        throw std::runtime_error(std::format("Failed to parse literal value: {}. Provided value: {}", std::make_error_code(err.ec).message(), vString));
     }
 
-    if (value < 1 || value > 8)
+    return value;
+}
+
+uint16_t Parser::parseAddress(const std::string& aString, uint8_t sourceValueBase)
+{
+    uint16_t value;
+
+    auto err = std::from_chars(aString.data(), aString.data() + aString.size(), value, sourceValueBase);
+
+    if (err.ec != std::errc{})
     {
-        throw std::runtime_error(std::format(
-            "Failed to parse value of type N. The value must be between 1 and 8 (as this is only used by the DRW instruction). Provided value: {}", value));
+        throw std::runtime_error(std::format("Failed to parse address value: {}. Provided value: {}", std::make_error_code(err.ec).message(), aString));
+    }
+
+    if (value > 4095)
+    {
+        throw std::runtime_error(std::format("Failed to parse address value. Value provided is too large: {}", value));
     }
 
     return value;
@@ -332,7 +345,14 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
                 if (literalType == LiteralType::VALUE_N)
                 {
 
-                    auto value = parseValueN(str, sourceValueBase);
+                    auto value = parseValue(str, sourceValueBase);
+
+                    if (value < 1 || value > 8)
+                    {
+                        throw std::runtime_error(std::format("Failed to parse value of type N. The value must be between 1 and 8 (as this is only used by the "
+                                                             "DRW instruction). Provided value: {}",
+                                                             value));
+                    }
 
                     parsedOpValues[i] = value;
                     rawHex |= value;
@@ -342,15 +362,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
 
                 if (literalType == LiteralType::VALUE_NN)
                 {
-                    uint8_t value;
-                    auto err = std::from_chars(&str[0], &str[0] + 3, value, sourceValueBase);
-
-                    if (err.ec != std::errc{})
-                    {
-                        // TODO: Handle error
-                    }
-
-                    // TODO: More validations.. (e.g. reject values > 255)
+                    auto value = parseValue(str, sourceValueBase);
 
                     parsedOpValues[i] = value;
                     rawHex |= value;
@@ -360,6 +372,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
 
                 if (literalType == LiteralType::ADDRESS)
                 {
+
                     // Labels can only be used as address placeholders
                     // Check if label map contains the literal and if so,
                     // turn the label into the assigned address
@@ -371,21 +384,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
                         break;
                     }
 
-                    // TODO: Add check if the value is numeric. If not and it's not a valid label, it's an invalid address.
-
-                    uint16_t value;
-                    auto err = std::from_chars(&str[0], &str[0] + 5, value, sourceValueBase);
-
-                    if (err.ec != std::errc{})
-                    {
-                        // TODO: Handle error
-                    }
-
-                    if (err.ptr != str.data() + str.size())
-                    {
-                    }
-
-                    // TODO: More validations.. (e.g. reject values > 4096)
+                    auto value = parseAddress(str, sourceValueBase);
 
                     parsedOpValues[i] = value;
                     rawHex |= value;
