@@ -101,7 +101,8 @@ std::vector<Instruction> Parser::parseInstructions(const std::vector<Token>& tok
             // It's a mnemonic
             mnem = token.text;
         }
-        else if (token.type == TokenType::Identifier || token.type == TokenType::Number)
+        else if (token.type == TokenType::Identifier || token.type == TokenType::Number || token.type == TokenType::LBracket ||
+                 token.type == TokenType::RBracket)
         {
             // It's an arg
             rawArgs.push_back(token);
@@ -132,17 +133,27 @@ std::vector<Instruction> Parser::parseInstructions(const std::vector<Token>& tok
 
 uint8_t Parser::parseRegister(std::string_view registerString)
 {
-    if ((!registerString.starts_with("V") && !registerString.starts_with("v")) || registerString.length() != 2)
+    if ((!registerString.starts_with("V") && !registerString.starts_with("v")))
     {
         throw std::runtime_error("Invalid register. Expected register name to start with 'V' and be in the Vx format.");
     }
 
     uint8_t regNumber;
-    auto err = std::from_chars(&registerString[1], &registerString[1] + 1, regNumber, 16);
+    auto err = std::from_chars(registerString.data() + 1, registerString.data() + registerString.size(), regNumber, 16);
 
     if (err.ec != std::errc{})
     {
         throw std::runtime_error(std::format("Failed to parse register number: {} {}", std::make_error_code(err.ec).message(), err.ptr));
+    }
+
+    if (err.ptr != registerString.data() + registerString.size())
+    {
+        throw std::runtime_error(std::format("Found invalid character(s) in register number: {}", err.ptr));
+    }
+
+    if (regNumber > 15)
+    {
+        throw std::runtime_error(std::format("Register number must be between 0x0 and 0xF. Provided value: 0x{:X}", regNumber));
     }
 
     return regNumber;
@@ -182,11 +193,6 @@ uint16_t Parser::parseAddress(const std::string& aString, uint8_t sourceValueBas
 
 Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<Token>& args)
 {
-    if (args.size() > 3)
-    {
-        throw std::runtime_error("Too many arguments");
-    }
-
     // Parse operand type for each arg
     // Needed so we know how to parse the values down the line
     std::array<Operand, 3> parsedOperandTypes{};
@@ -264,7 +270,19 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
                                               return false;
                                           }
 
-                                          if (args.size() != instr.operandCount)
+                                          // If there's brackets in the arg, e.g. [i], it inflates the operandCount
+                                          // Decrement it to allow for proper comparison
+                                          auto realSize = args.size();
+
+                                          for (size_t i = 0; i < args.size(); i++)
+                                          {
+                                              if (args[i].type == TokenType::LBracket || args[i].type == TokenType::RBracket)
+                                              {
+                                                  realSize--;
+                                              }
+                                          }
+
+                                          if (realSize != instr.operandCount)
                                           {
                                               return false;
                                           }
