@@ -28,6 +28,8 @@ class Parser
     std::vector<Instruction> parseInstructions(const std::vector<Token>& tokens);
 
   private:
+    uint8_t parseRegister(std::string_view registerString);
+
     std::unordered_map<std::string, Label> m_labelMemoryMap;
 
     Instruction parseInstruction(std::string_view mnem, const std::vector<Token>& args);

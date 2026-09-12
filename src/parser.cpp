@@ -127,6 +127,29 @@ std::vector<Instruction> Parser::parseInstructions(const std::vector<Token>& tok
     return out;
 }
 
+uint8_t Parser::parseRegister(std::string_view registerString)
+{
+    if ((!registerString.starts_with("V") && !registerString.starts_with("v")) || registerString.length() != 2)
+    {
+        throw std::runtime_error("Invalid register. Expected register name to start with 'V' and be in the Vx format.");
+    }
+
+    uint8_t regNumber;
+    auto err = std::from_chars(&registerString[1], &registerString[1] + 1, regNumber, 16);
+
+    if (err.ec != std::errc{})
+    {
+        // TODO: Handle error
+    }
+
+    if (regNumber > 0xF)
+    {
+        throw std::runtime_error("Invalid register number. Register number must be between 0 and F");
+    }
+
+    return regNumber;
+}
+
 Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<Token>& args)
 {
     if (args.size() > 3)
@@ -265,30 +288,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
 
             case ArgType::REGISTER_X:
             {
-                sourceValueBase = 16;
-
-                if ((!str.starts_with("V") && !str.starts_with("v")) || str.length() != 2)
-                {
-                    throw std::runtime_error("Invalid register. Expected register name to start with 'V' and be in the Vx format.");
-
-                    break;
-                }
-
-                uint8_t regNumber;
-                auto err = std::from_chars(&str[1], &str[1] + 1, regNumber, sourceValueBase);
-
-                if (err.ec != std::errc{})
-                {
-                    // TODO: Handle error
-                }
-
-                if (regNumber > 0xF)
-                {
-                    throw std::runtime_error("Invalid register number. Register number must be between 0 and F");
-
-                    break;
-                }
-
+                auto regNumber = parseRegister(str);
                 parsedOpValues[i] = regNumber;
 
                 rawHex |= regNumber << 8;
@@ -298,30 +298,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
 
             case ArgType::REGISTER_Y:
             {
-                sourceValueBase = 16;
-
-                if ((!str.starts_with("V") && !str.starts_with("v")) || str.length() != 2)
-                {
-                    throw std::runtime_error("Invalid register. Expected register name to start with 'V' and be in the Vx format.");
-
-                    break;
-                }
-
-                uint8_t regNumber;
-                auto err = std::from_chars(&str[1], &str[1] + 1, regNumber, sourceValueBase);
-
-                if (err.ec != std::errc{})
-                {
-                    // TODO: Handle error
-                }
-
-                if (regNumber > 0xF)
-                {
-                    throw std::runtime_error("Invalid register number. Register number must be between 0 and F");
-
-                    break;
-                }
-
+                auto regNumber = parseRegister(str);
                 parsedOpValues[i] = regNumber;
 
                 rawHex |= regNumber << (8 - (4 * i));
