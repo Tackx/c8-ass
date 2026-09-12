@@ -137,9 +137,9 @@ uint8_t Parser::parseRegister(std::string_view registerString)
     uint8_t regNumber;
     auto err = std::from_chars(&registerString[1], &registerString[1] + 1, regNumber, 16);
 
-    if (err.ec != std::errc{})
+    if (err.ec != std::errc{} || err.ptr != &registerString[1] + 1)
     {
-        // TODO: Handle error
+        throw std::runtime_error(std::format("Failed to parse register number: {}", std::make_error_code(err.ec).message()));
     }
 
     if (regNumber > 0xF)
