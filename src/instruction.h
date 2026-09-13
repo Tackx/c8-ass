@@ -14,12 +14,10 @@ enum class ArgType
 {
     NONE,
     UNKNOWN,
-    // REGISTER,
     REGISTER_X,
     REGISTER_Y,
     LITERAL,
     I_REG,
-    V0,
     DT,
     KEY,
     ST,
@@ -58,7 +56,6 @@ struct Instruction
     uint16_t encodedHex;
 };
 
-constexpr Operand V0{ArgType::V0};
 constexpr Operand REG_X{ArgType::REGISTER_X};
 constexpr Operand REG_Y{ArgType::REGISTER_Y};
 constexpr Operand N{ArgType::LITERAL, LiteralType::VALUE_N};
@@ -93,8 +90,9 @@ constexpr std::array opTable = {
 
     // JP
     InstructionDefinition{.mnem = "JP", .hex = 0x1000, .operandCount = 1, .operands = {NNN}},
-    // TODO: Unfuck this
-    InstructionDefinition{.mnem = "JP", .hex = 0xB000, .operandCount = 2, .operands = {V0, NNN}},
+
+    // JP0
+    InstructionDefinition{.mnem = "JP0", .hex = 0xB000, .operandCount = 1, .operands = {NNN}},
 
     // LD
     InstructionDefinition{.mnem = "LD", .hex = 0x6000, .operandCount = 2, .operands = {REG_X, NN}},
