@@ -26,6 +26,8 @@ target_sources(ass PRIVATE
     src/util.cpp
     src/lexer.h
     src/lexer.cpp
+    src/loader.cpp
+    src/loader.h
 )
 
 target_include_directories(ass PRIVATE src)

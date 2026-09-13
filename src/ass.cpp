@@ -1,40 +1,19 @@
 #include <cstdio>
 #include <exception>
 #include <format>
-#include <fstream>
-#include <ios>
-#include <iostream>
 #include <print>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <utility>
-
-#ifdef _WIN32
-#include <io.h>
-#include <stdio.h>
-#define isatty _isatty
-#define fileno _fileno
-#else
-#include <unistd.h>
-#endif
 
 #include "ass.h"
 #include "emitter.h"
 #include "lexer.h"
+#include "loader.h"
 #include "parser.h"
 
 namespace ass
 {
-
-class NoInputException : public std::runtime_error
-{
-  public:
-    NoInputException(const char* msg) : std::runtime_error(msg)
-    {
-    }
-};
 
 int assemble(int argc, char** args)
 {
@@ -50,11 +29,6 @@ int assemble(int argc, char** args)
     // - 4 (exec. name + optional output flag + input path) -- ass -o foo.ch8 input.ass
     try
     {
-        std::stringstream buffer;
-        std::string fileContent;
-
-        bool isFileInput = !isatty(fileno(stdin));
-
         // Parse flags
         size_t lastFlagValueIndex{0};
         for (size_t i = 1; i < (size_t)argc; i++)
@@ -107,27 +81,7 @@ int assemble(int argc, char** args)
             }
         }
 
-        if (!inPath.empty())
-        {
-            std::ifstream t(inPath, std::ios::binary);
-            if (!t)
-            {
-                throw std::runtime_error("Failed to open file");
-            }
-
-            buffer << t.rdbuf();
-        }
-        else if (isFileInput)
-        {
-            // Try to load input from stdin
-            buffer << std::cin.rdbuf();
-        }
-        else
-        {
-            throw NoInputException("No input specified");
-        }
-
-        fileContent = std::move(buffer).str();
+        auto fileContent = loadFileContent(inPath);
 
         Lexer lexer{fileContent};
         Parser parser{};
