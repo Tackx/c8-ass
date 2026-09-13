@@ -204,6 +204,18 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
 
             auto token = args[i];
 
+            // TODO: Move to first pass?
+            if (token.type == TokenType::LBracket && i + 1 < args.size() && args[i + 1].type != TokenType::Identifier &&
+                (args[i + 1].text != "i" || args[i + 1].text != "I"))
+            {
+                throw std::runtime_error(std::format("Duplicate brackets found on line {}:{}", token.line, token.col));
+            }
+
+            if (token.type == TokenType::RBracket && i > 0 && args[i - 1].type != TokenType::Identifier && (args[i - 1].text != "i" || args[i - 1].text != "I"))
+            {
+                throw std::runtime_error(std::format("Duplicate brackets found on line {}:{}", token.line, token.col));
+            }
+
             // [i] || [I]
             if (token.type == TokenType::LBracket && i + 2 < args.size() && args[i + 1].type == TokenType::Identifier &&
                 (args[i + 1].text == "I" || args[i + 1].text == "i") && args[i + 2].type == TokenType::RBracket)
