@@ -28,6 +28,14 @@
 namespace ass
 {
 
+class NoInputException : public std::runtime_error
+{
+  public:
+    NoInputException(const char* msg) : std::runtime_error(msg)
+    {
+    }
+};
+
 int assemble(int argc, char** args)
 {
     static constexpr auto USAGE_MSG = "Usage: ass [FLAGS]... INPUT\n-o  Specifies the output path and filename. Default = current directory + 'output.ch8'\n";
@@ -116,10 +124,7 @@ int assemble(int argc, char** args)
         }
         else
         {
-            std::println("{}", USAGE_MSG);
-
-            // TODO: Create a specific exception type so the help msg can be displayed after the "Exception caught" text
-            throw std::runtime_error("No input specified");
+            throw NoInputException("No input specified");
         }
 
         fileContent = std::move(buffer).str();
@@ -140,6 +145,13 @@ int assemble(int argc, char** args)
         emitter.emit(parsedInstructions);
 
         return 0;
+    }
+    catch (const NoInputException& e)
+    {
+        std::println("Exception caught: {}\n", e.what());
+        std::println("{}", USAGE_MSG);
+
+        return 1;
     }
     catch (const std::exception& e)
     {
