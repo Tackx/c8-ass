@@ -61,13 +61,23 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
             }
         }
 
+        if (token.type == TokenType::LBracket && i + 1 < tokens.size() && tokens[i + 1].type != TokenType::Identifier &&
+            (tokens[i + 1].text != "i" || tokens[i + 1].text != "I"))
+        {
+            throw std::runtime_error(std::format("Unrecognized bracket expression found on line {}:{}", token.line, token.col));
+        }
+
+        if (token.type == TokenType::RBracket && i > 0 && tokens[i - 1].type != TokenType::Identifier &&
+            (tokens[i - 1].text != "i" || tokens[i - 1].text != "I"))
+        {
+            throw std::runtime_error(std::format("Unrecognized bracket expression found on line {}:{}", token.line, token.col));
+        }
+
         // If the previous token is not a newline and this one is, increment the pointer
         if (i > 0 && tokens[i - 1].type != TokenType::Newline && token.type == TokenType::Newline)
         {
             memPointer += 2;
         }
-
-        // TODO: It would make sense to do semantic checks here in the first pass too to have feedback and stop the process earlier
     }
 }
 
@@ -203,18 +213,6 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
         {
 
             auto token = args[i];
-
-            // TODO: Move to first pass?
-            if (token.type == TokenType::LBracket && i + 1 < args.size() && args[i + 1].type != TokenType::Identifier &&
-                (args[i + 1].text != "i" || args[i + 1].text != "I"))
-            {
-                throw std::runtime_error(std::format("Duplicate brackets found on line {}:{}", token.line, token.col));
-            }
-
-            if (token.type == TokenType::RBracket && i > 0 && args[i - 1].type != TokenType::Identifier && (args[i - 1].text != "i" || args[i - 1].text != "I"))
-            {
-                throw std::runtime_error(std::format("Duplicate brackets found on line {}:{}", token.line, token.col));
-            }
 
             // [i] || [I]
             if (token.type == TokenType::LBracket && i + 2 < args.size() && args[i + 1].type == TokenType::Identifier &&

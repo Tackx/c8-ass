@@ -154,8 +154,6 @@ std::vector<Token> Lexer::getTokens()
                    m_text[m_cursor] != ':' && !isArgSeparator(m_text[m_cursor]) && !isComment(m_text[m_cursor]) && m_text[m_cursor] != '[' &&
                    m_text[m_cursor] != ']')
             {
-                // TODO: Check for L/R brackets and throw if present?
-
                 m_cursor++; // Move the cursor
                 m_col++;
             }
