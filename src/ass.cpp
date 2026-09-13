@@ -30,7 +30,7 @@ namespace ass
 
 int assemble(int argc, char** args)
 {
-    static constexpr auto USAGE_MSG = "Usage: ass INPUT OUTPUT";
+    static constexpr auto USAGE_MSG = "Usage: ass [FLAGS]... INPUT\n-o  Specifies the output path and filename. Default = current directory + 'output.ch8'\n";
 
     std::string inPath{};
     std::string outPath{"./output.ch8"};
@@ -118,6 +118,7 @@ int assemble(int argc, char** args)
         {
             std::println("{}", USAGE_MSG);
 
+            // TODO: Create a specific exception type so the help msg can be displayed after the "Exception caught" text
             throw std::runtime_error("No input specified");
         }
 
