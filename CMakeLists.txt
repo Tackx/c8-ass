@@ -28,6 +28,8 @@ target_sources(ass PRIVATE
     src/lexer.cpp
     src/loader.cpp
     src/loader.h
+    src/flags.cpp
+    src/flags.h
 )
 
 target_include_directories(ass PRIVATE src)
