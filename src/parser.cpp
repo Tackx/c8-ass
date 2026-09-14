@@ -105,6 +105,8 @@ std::vector<Instruction> Parser::parseInstructions(const std::vector<Token>& tok
         {
             // It's a label, skip both tokens (labels are processed in the first pass)
             i++;
+
+            continue;
         }
         else if (token.type == TokenType::Identifier && firstIdentifier)
         {
@@ -311,6 +313,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
                                           return compatible;
                                       });
 
+    // Fix out of bounds access (CLS has no args, so we can't access args[0])
     if (match == opTable.end())
     {
         throw std::runtime_error(std::format("Failed to find mnemonic with matching operand kinds.\nLine: {}\nMnemonic: {}", args[0].line, mnem));
