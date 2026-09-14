@@ -10,3 +10,8 @@ AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortEnumsOnASingleLine: false
+AlignAfterOpenBracket: BlockIndent
+ContinuationIndentWidth: 4
+
+KeepEmptyLines:
+  AtStartOfBlock: false

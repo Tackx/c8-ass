@@ -1,9 +1,11 @@
 #include <cctype>
+#include <format>
 #include <stdexcept>
 #include <string_view>
 #include <vector>
 
 #include "lexer.h"
+#include "loader.h"
 
 namespace ass
 {
@@ -123,14 +125,14 @@ std::vector<Token> Lexer::getTokens()
                 {
                     if (!std::isxdigit(m_text[m_cursor]))
                     {
-                        throw std::runtime_error("Invalid number");
+                        throw std::runtime_error(std::format("{}:{}:{}: Invalid number", ass::filename, m_line, m_col));
                     }
                 }
                 else
                 {
                     if (!std::isdigit(m_text[m_cursor]))
                     {
-                        throw std::runtime_error("Invalid number");
+                        throw std::runtime_error(std::format("{}:{}:{}: Invalid number", ass::filename, m_line, m_col));
                     }
                 }
 

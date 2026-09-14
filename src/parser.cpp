@@ -14,6 +14,7 @@
 
 #include "instruction.h"
 #include "lexer.h"
+#include "loader.h"
 #include "parser.h"
 #include "util.h"
 
@@ -39,8 +40,12 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
 
             if (m_labelMemoryMap.contains(key))
             {
-                throw std::runtime_error(std::format("Found duplicate label on line {}:{}. Label {} is already defined on line {}.", token.line, token.col,
-                                                     token.text.substr(0, token.text.length() - 1), m_labelMemoryMap[key].line));
+                throw std::runtime_error(
+                    std::format(
+                        "{}:{}:{}: Duplicate label. Label {} is already defined on line {}:{}", ass::filename, token.line, token.col, token.text, ass::filename,
+                        m_labelMemoryMap[key].line
+                    )
+                );
             }
 
             m_labelMemoryMap[key] = Label{.addr = memPointer, .line = token.line};
@@ -55,16 +60,17 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
             }
         }
 
-        if (token.type == TokenType::LBracket && i + 1 < tokens.size() && tokens[i + 1].type != TokenType::Identifier &&
-            (tokens[i + 1].text != "i" || tokens[i + 1].text != "I"))
+        if (token.type == TokenType::LBracket && i + 1 < tokens.size() && tokens[i + 1].type != TokenType::Identifier && tokens[i + 1].text != "i" &&
+            tokens[i + 1].text != "I")
         {
-            throw std::runtime_error(std::format("Unrecognized bracket expression found on line {}:{}", token.line, token.col));
+            throw std::runtime_error(std::format("{}:{}:{}: Unrecognized bracket expression", ass::filename, token.line, token.col));
         }
 
-        if (token.type == TokenType::RBracket && i > 0 && tokens[i - 1].type != TokenType::Identifier &&
-            (tokens[i - 1].text != "i" || tokens[i - 1].text != "I"))
+        if (token.type == TokenType::RBracket &&
+            (i < 2 || (tokens[i - 1].type != TokenType::Identifier && tokens[i - 1].text != "i" && tokens[i - 1].text != "I") ||
+             (tokens[i - 2].type != TokenType::LBracket)))
         {
-            throw std::runtime_error(std::format("Unrecognized bracket expression found on line {}:{}", token.line, token.col));
+            throw std::runtime_error(std::format("{}:{}:{}: Unrecognized bracket expression", ass::filename, token.line, token.col));
         }
 
         // If the previous token is not a newline and this one is, increment the pointer
@@ -107,8 +113,9 @@ std::vector<Instruction> Parser::parseInstructions(const std::vector<Token>& tok
             // It's a mnemonic
             mnem = token.text;
         }
-        else if (token.type == TokenType::Identifier || token.type == TokenType::Number || token.type == TokenType::LBracket ||
-                 token.type == TokenType::RBracket)
+        else if (
+            token.type == TokenType::Identifier || token.type == TokenType::Number || token.type == TokenType::LBracket || token.type == TokenType::RBracket
+        )
         {
             // It's an arg
             rawArgs.push_back(token);
@@ -207,7 +214,6 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
     {
         for (size_t i = 0; i < args.size(); i++)
         {
-
             auto token = args[i];
 
             // [i] || [I]
@@ -224,8 +230,10 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
                 parsedOperandTypes[i] = {ArgType::I_REG};
             }
 
-            else if (token.type == TokenType::Identifier && (token.text.starts_with("V") || token.text.starts_with("v")) && i > 0 &&
-                     parsedOperandTypes[i - 1].argType == ArgType::REGISTER_X)
+            else if (
+                token.type == TokenType::Identifier && (token.text.starts_with("V") || token.text.starts_with("v")) && i > 0 &&
+                parsedOperandTypes[i - 1].argType == ArgType::REGISTER_X
+            )
             {
                 parsedOperandTypes[i] = {ArgType::REGISTER_Y};
             }
@@ -268,49 +276,51 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
     }
 
     // Find matching instruction/op
-    auto match = std::ranges::find_if(opTable,
-                                      [&](const InstructionDefinition& instr)
-                                      {
-                                          if (!equalsIgnoreCase(mnem, instr.mnem))
-                                          {
-                                              return false;
-                                          }
+    auto match = std::ranges::find_if(
+        opTable,
+        [&](const InstructionDefinition& instr)
+        {
+            if (!equalsIgnoreCase(mnem, instr.mnem))
+            {
+                return false;
+            }
 
-                                          // If there's brackets in the arg, e.g. [i], it inflates the operandCount
-                                          // Decrement it to allow for proper comparison
-                                          auto realSize = args.size();
+            // If there's brackets in the arg, e.g. [i], it inflates the operandCount
+            // Decrement it to allow for proper comparison
+            auto realSize = args.size();
 
-                                          for (size_t i = 0; i < args.size(); i++)
-                                          {
-                                              if (args[i].type == TokenType::LBracket || args[i].type == TokenType::RBracket)
-                                              {
-                                                  realSize--;
-                                              }
-                                          }
+            for (size_t i = 0; i < args.size(); i++)
+            {
+                if (args[i].type == TokenType::LBracket || args[i].type == TokenType::RBracket)
+                {
+                    realSize--;
+                }
+            }
 
-                                          if (realSize != instr.operandCount)
-                                          {
-                                              return false;
-                                          }
+            if (realSize != instr.operandCount)
+            {
+                return false;
+            }
 
-                                          bool compatible = true;
-                                          for (size_t i = 0; i < instr.operandCount; i++)
-                                          {
-                                              if (!parsedOperandTypes[i].isCompatibleWith(instr.operands[i]))
-                                              {
-                                                  compatible = false;
+            bool compatible = true;
+            for (size_t i = 0; i < instr.operandCount; i++)
+            {
+                if (!parsedOperandTypes[i].isCompatibleWith(instr.operands[i]))
+                {
+                    compatible = false;
 
-                                                  break;
-                                              }
-                                          }
+                    break;
+                }
+            }
 
-                                          return compatible;
-                                      });
+            return compatible;
+        }
+    );
 
     // Fix out of bounds access (CLS has no args, so we can't access args[0])
     if (match == opTable.end())
     {
-        throw std::runtime_error(std::format("Failed to find mnemonic with matching operand kinds.\nLine: {}\nMnemonic: {}", args[0].line, mnem));
+        throw std::runtime_error(std::format("{}:{}: Invalid mnemonic + operand type combination", ass::filename, args[0].line));
     }
 
     InstructionDefinition instr = *match;
@@ -343,7 +353,17 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
 
             case ArgType::REGISTER_X:
             {
-                auto regNumber = parseRegister(str);
+                uint8_t regNumber;
+
+                try
+                {
+                    regNumber = parseRegister(str);
+                }
+                catch (const std::runtime_error& e)
+                {
+                    throw std::runtime_error(std::format("{}:{}:{}: {}", ass::filename, args[i].line, args[i].col, e.what()));
+                }
+
                 parsedOpValues[i] = regNumber;
 
                 rawHex |= regNumber << 8;
@@ -353,7 +373,17 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
 
             case ArgType::REGISTER_Y:
             {
-                auto regNumber = parseRegister(str);
+                uint8_t regNumber;
+
+                try
+                {
+                    regNumber = parseRegister(str);
+                }
+                catch (const std::runtime_error& e)
+                {
+                    throw std::runtime_error(std::format("{}:{}:{}: {}", ass::filename, args[i].line, args[i].col, e.what()));
+                }
+
                 parsedOpValues[i] = regNumber;
 
                 rawHex |= regNumber << 4;
@@ -367,19 +397,35 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
 
                 if (!literalType.has_value())
                 {
-                    throw std::runtime_error("Cannot parse literal (arg specified as literal, but found no value for it)");
+                    throw std::runtime_error(
+                        std::format(
+                            "{}:{}:{}: Cannot parse literal (arg specified as literal, but found no value for it)", ass::filename, args[i].line, args[i].col
+                        )
+                    );
                 }
 
                 if (literalType == LiteralType::VALUE_N)
                 {
+                    uint8_t value;
 
-                    auto value = parseValue(str, sourceValueBase);
+                    try
+                    {
+                        value = parseValue(str, sourceValueBase);
+                    }
+                    catch (const std::runtime_error& e)
+                    {
+                        throw std::runtime_error(std::format("{}:{}:{}: {}", ass::filename, args[i].line, args[i].col, e.what()));
+                    }
 
                     if (value < 1 || value > 8)
                     {
-                        throw std::runtime_error(std::format("Failed to parse value of type N. The value must be between 1 and 8 (as this is only used by the "
-                                                             "DRW instruction). Provided value: {}",
-                                                             value));
+                        throw std::runtime_error(
+                            std::format(
+                                "{}:{}:{}: Failed to parse value of type N. The value must be between 1 and 8 (as this is only used by the "
+                                "DRW instruction). Provided value: {}",
+                                ass::filename, args[i].line, args[i].col, value
+                            )
+                        );
                     }
 
                     parsedOpValues[i] = value;
@@ -390,7 +436,16 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
 
                 if (literalType == LiteralType::VALUE_NN)
                 {
-                    auto value = parseValue(str, sourceValueBase);
+                    uint8_t value;
+
+                    try
+                    {
+                        value = parseValue(str, sourceValueBase);
+                    }
+                    catch (const std::runtime_error& e)
+                    {
+                        throw std::runtime_error(std::format("{}:{}:{}: {}", ass::filename, args[i].line, args[i].col, e.what()));
+                    }
 
                     parsedOpValues[i] = value;
                     rawHex |= value;
@@ -400,7 +455,6 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
 
                 if (literalType == LiteralType::ADDRESS)
                 {
-
                     // Labels can only be used as address placeholders
                     // Check if label map contains the literal and if so,
                     // turn the label into the assigned address
@@ -412,7 +466,16 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
                         break;
                     }
 
-                    auto value = parseAddress(str, sourceValueBase);
+                    uint16_t value;
+
+                    try
+                    {
+                        value = parseAddress(str, sourceValueBase);
+                    }
+                    catch (const std::runtime_error& e)
+                    {
+                        throw std::runtime_error(std::format("{}:{}:{}: {}", ass::filename, args[i].line, args[i].col, e.what()));
+                    }
 
                     parsedOpValues[i] = value;
                     rawHex |= value;

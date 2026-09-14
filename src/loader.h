@@ -6,6 +6,8 @@
 namespace ass
 {
 
+inline std::string filename{};
+
 class NoInputException : public std::runtime_error
 {
   public:

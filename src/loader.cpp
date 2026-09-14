@@ -29,6 +29,8 @@ std::string loadFileContent(const std::string& inputPath)
 
     if (inputPath != "")
     {
+        ass::filename = inputPath.substr(inputPath.find_last_of("/\\") + 1);
+
         std::ifstream t(inputPath, std::ios::binary);
         if (!t)
         {
