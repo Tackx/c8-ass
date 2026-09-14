@@ -45,8 +45,6 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
 
             m_labelMemoryMap[key] = Label{.addr = memPointer, .line = token.line};
 
-            std::println("IT'S A LABEL: {}", m_labelMemoryMap.at(key).addr);
-
             i++; // Skip the colon
 
             if (i + 1 < tokens.size() && tokens[i + 1].type == TokenType::Newline)
@@ -54,10 +52,6 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
                 i++; // Skip the newline
 
                 continue;
-            }
-            else
-            {
-                memPointer += 2;
             }
         }
 
