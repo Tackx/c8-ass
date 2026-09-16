@@ -51,9 +51,15 @@ struct InstructionDefinition
 
 struct Instruction
 {
-    const InstructionDefinition& def;
-    std::array<uint16_t, 3> operandValues;
-    uint16_t encodedHex;
+    const InstructionDefinition* def{};
+    std::array<uint16_t, 3> operandValues{};
+    uint16_t encodedHex{};
+};
+
+struct Directive
+{
+    std::string_view name{};
+    std::vector<uint8_t> values{};
 };
 
 constexpr Operand REG_X{ArgType::REGISTER_X};
@@ -69,6 +75,8 @@ constexpr Operand ST{ArgType::ST};
 constexpr Operand KEY{ArgType::KEY};
 constexpr Operand FONT{ArgType::FONT};
 constexpr Operand BCD{ArgType::BCD};
+
+constexpr std::array supportedDirectives = {"DB"};
 
 constexpr std::array opTable = {
     // ADD

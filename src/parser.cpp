@@ -10,6 +10,8 @@
 #include <string_view>
 #include <system_error>
 #include <unordered_map>
+#include <utility>
+#include <variant>
 #include <vector>
 
 #include "instruction.h"
@@ -23,6 +25,18 @@ namespace ass
 
 Parser::Parser()
 {
+}
+
+bool Parser::isDirective(std::string_view mnem)
+{
+    auto foundDirective = std::find(supportedDirectives.begin(), supportedDirectives.end(), mnem);
+
+    if (foundDirective != supportedDirectives.end())
+    {
+        return true;
+    }
+
+    return false;
 }
 
 void Parser::parseLabels(const std::vector<Token>& tokens)
@@ -60,6 +74,30 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
             }
         }
 
+        else if (token.type == TokenType::Identifier && isDirective(token.text))
+        {
+            // TODO: Refactor this logic into a shared function (we're already doing a lot of similar parsing in parseInstruction)
+
+            if (token.text == "DB")
+            {
+                i++;
+
+                while (i < tokens.size() && (tokens[i].type != TokenType::Newline && tokens[i].type != TokenType::End))
+                {
+                    if (tokens[i].type == TokenType::Number)
+                    {
+                        memPointer++;
+                    }
+
+                    i++;
+                }
+
+                i++;
+
+                continue;
+            }
+        }
+
         if (token.type == TokenType::LBracket && i + 1 < tokens.size() && tokens[i + 1].type != TokenType::Identifier && tokens[i + 1].text != "i" &&
             tokens[i + 1].text != "I")
         {
@@ -81,9 +119,42 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
     }
 }
 
-std::vector<Instruction> Parser::parseInstructions(const std::vector<Token>& tokens)
+Directive Parser::parseDirective(const Token& token, const std::vector<Token>& rawValues)
 {
-    std::vector<Instruction> out;
+    if (token.text == "DB")
+    {
+        std::vector<uint8_t> parsedValues{};
+
+        for (const auto& v : rawValues)
+        {
+            uint8_t parsedValue{};
+
+            auto err = std::from_chars(v.text.data() + 2, v.text.data() + v.text.size(), parsedValue, 16);
+
+            if (err.ec != std::errc{})
+            {
+                throw std::runtime_error(
+                    std::format("{}:{}:{}: Error when parsing directive argument: {}", ass::filename, v.line, v.col, std::make_error_code(err.ec).message())
+                );
+            }
+
+            parsedValues.push_back(parsedValue);
+        }
+
+        Directive directive{
+            .name = token.text,
+            .values = std::move(parsedValues),
+        };
+
+        return directive;
+    }
+
+    throw std::runtime_error(std::format("{}:{}:{}: Unsupported directive found", ass::filename, token.line, token.col));
+}
+
+std::vector<std::variant<Instruction, Directive>> Parser::parseInstructions(const std::vector<Token>& tokens)
+{
+    std::vector<std::variant<Instruction, Directive>> out;
 
     std::string_view mnem{};
     std::vector<Token> rawArgs{};
@@ -111,6 +182,8 @@ std::vector<Instruction> Parser::parseInstructions(const std::vector<Token>& tok
         else if (token.type == TokenType::Identifier && firstIdentifier)
         {
             // It's a mnemonic
+            // TODO: Change mnem from a string to the Token struct
+            // (for more context, e.g. the line number)
             mnem = token.text;
         }
         else if (
@@ -122,8 +195,18 @@ std::vector<Instruction> Parser::parseInstructions(const std::vector<Token>& tok
         }
         else if (token.type == TokenType::Newline && mnem != "")
         {
-            auto instr = parseInstruction(mnem, rawArgs);
-            out.push_back(instr);
+            std::variant<Instruction, Directive> parsed;
+
+            if (isDirective(mnem))
+            {
+                parsed = parseDirective({.text = mnem}, rawArgs);
+            }
+            else
+            {
+                parsed = parseInstruction(mnem, rawArgs);
+            }
+
+            out.push_back(parsed);
 
             mnem = "";
             rawArgs = {};
@@ -204,6 +287,7 @@ uint16_t Parser::parseAddress(const std::string& aString, uint8_t sourceValueBas
     return value;
 }
 
+// TODO: Move some code out to separate & testable functions?
 Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<Token>& args)
 {
     // Parse operand type for each arg
@@ -346,6 +430,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
                 str = str.substr(2);
             }
 
+            // TODO: Look into unhandled cases
             switch (instr.operands[i].argType)
             {
             case ArgType::NONE:
@@ -491,7 +576,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
     }
 
     return Instruction{
-        .def = *match,
+        .def = match,
         .operandValues = parsedOpValues,
         .encodedHex = rawHex,
     };

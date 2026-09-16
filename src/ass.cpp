@@ -22,6 +22,7 @@ int assemble(int argc, char** argv)
 
     try
     {
+        // TODO: Use flags["-o"], currently the default outPath is always used
         auto [flags, inPath] = getFlags(argc, argv);
 
         auto fileContent = loadFileContent(inPath);

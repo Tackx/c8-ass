@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "instruction.h"
@@ -13,7 +14,7 @@ class Emitter
   public:
     explicit Emitter(const std::string& outPath);
 
-    void emit(const std::vector<Instruction>& instructions);
+    void emit(const std::vector<std::variant<Instruction, Directive>>& instructions);
 
   private:
     std::ofstream m_fo;
