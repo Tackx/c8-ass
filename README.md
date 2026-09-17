@@ -7,13 +7,13 @@ Developed live at:
 - <https://www.twitch.tv/tack___>
 - <https://www.youtube.com/@Txck-dev>
 
-![code](/docs/code.png)
+![code](/docs/vxn.jpg)
 
 ## TODO
 
 - [ ] Fix lines not starting with label or a mnem being parsed incorrectly
   - [ ] Could add a validation that it's either a label or a valid mnemonic (add an array of valid MNEMs?)
-- [ ] Go through TODOs
+- [ ] Go through TODOs (in code)
 - [ ] More validations
 - [ ] Error handling
 - [ ] Refactor
