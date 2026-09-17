@@ -2,6 +2,11 @@
 
 Custom CHIP-8 assembler (WIP)
 
+Developed live at:
+
+- <https://www.twitch.tv/tack___>
+- <https://www.youtube.com/@Txck-dev>
+
 ![code](/docs/code.png)
 
 ## TODO
