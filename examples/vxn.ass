@@ -1,0 +1,26 @@
+; Draws VXN to the screen
+
+CLS
+
+LD V0, 0
+LD V1, 0
+LD I, sprite_v
+DRW V0, V1, 5
+
+LD V0, 10
+LD I, sprite_x
+DRW V0, V1, 5
+
+LD V0, 20
+LD I, sprite_n
+DRW V0, V1, 5
+
+loop:
+    JP loop
+
+sprite_v: 
+    DB 0xC3,0xC3, 0xC3, 0x66, 0x18
+sprite_x: 
+    DB 0xC3, 0x66, 0x18, 0x66, 0xC3
+sprite_n: 
+    DB 0xC3, 0xE3, 0xF3, 0xDB, 0xC7

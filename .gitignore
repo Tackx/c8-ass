@@ -411,7 +411,7 @@ build/
 *.o
 *.exe
 *.asm
-*.ass
+/*.ass
 *.ch8
 compile_commands.json
 *_log.txt

@@ -1,0 +1,25 @@
+; Draws BRB to the screen
+
+CLS
+
+LD V0, 26 ; x
+LD V1, 12 ; y
+LD V2, 0x0B
+LD F, V2
+DRW V0, V1, 5
+
+LD V0, 31
+LD I, sprite_r
+DRW V0, V1, 5
+
+LD V0, 36
+LD V2, 0x0B
+LD F, V2
+DRW V0, V1, 5
+
+loop:
+    JP loop
+
+sprite_r:
+    DB 0xE0, 0x90, 0xE0, 0x90, 0x90
+

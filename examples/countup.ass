@@ -1,0 +1,28 @@
+; Counts from 0 to F and restarts from 0
+
+start:
+    CLS 
+    LD  V0, 28                  ; x center
+    LD  V1, 12                  ; y center
+    LD  V2, 0                   ; start at digit 0
+
+
+main:
+    LD  F, V2                   ; point I at the font sprite for V2
+    DRW V0, V1, 5               ; draw it
+
+    LD  V3, 30                  ; delay about half a second
+    LD  DT, V3
+
+wait:
+    LD  V3, DT 
+    SE  V3, 0
+    JP  wait
+
+    DRW V0, V1, 5               ; draw again to erase
+
+    ADD V2, 1                   ; next digit
+    LD  V3, 0x0F
+    AND V2, V3                  ; wrap 16 back to 0
+
+    JP  main
