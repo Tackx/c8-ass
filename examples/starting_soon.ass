@@ -1,0 +1,169 @@
+; Draws "Stream Starting Soon" to the screen
+
+; R [x] 0xE0, 0x90, 0xE0, 0x90, 0x90
+; S [x] 0xF0, 0x80, 0xF0, 0x10, 0xF0
+
+; 11110000 F0
+; 10000000 80
+; 11110000 F0
+; 00010000 10
+; 11110000 F0
+
+; T [x] 0xE0, 0x40, 0x40, 0x40, 0x40
+
+; 11100000 E0
+; 01000000 40
+; 01000000 40
+; 01000000 40
+; 01000000 40
+
+; M [x] 0x88, 0xD8, 0xA8, 0x88, 0x88
+
+; 10001000 88
+; 11011000 D8
+; 10101000 A8
+; 10001000 88
+; 10001000 88
+
+; I [x] 0x80, 0x80, 0x80, 0x80, 0x80
+
+; 10000000 80
+; 10000000 80
+; 10000000 80
+; 10000000 80
+; 10000000 80
+
+
+; N [x] 0x90, 0xD0, 0xD0, 0xB0, 0xB0
+
+; 10010000 90
+; 11010000 D0
+; 11010000 D0
+; 10110000 B0
+; 10110000 B0
+
+
+; G [x] 0xF0, 0x80, 0xB0, 0x90, 0xF0
+ 
+; 11110000 F0
+; 10000000 80
+; 10110000 B0
+; 10010000 90
+; 11110000 F0
+
+CLS
+
+; STREAM
+; 29 pixels wide total
+
+LD V0, 17
+LD V1, 7
+LD I, sprite_s
+DRW V0, V1, 5
+
+LD V0, 22
+LD I, sprite_t
+DRW V0, V1, 5
+
+LD V0, 26
+LD I, sprite_r
+DRW V0, V1, 5
+
+LD V0, 31
+LD V2, 0x0E
+LD F, V2
+DRW V0, V1, 5
+
+LD V0, 36
+LD V2, 0x0A
+LD F, V2
+DRW V0, V1, 5
+
+LD V0, 41
+LD I, sprite_m
+DRW V0, V1, 5
+
+LD V1, 13 ; newline
+
+; STARTING
+; 34 pixels wide total
+
+LD V0, 15
+LD I, sprite_s
+DRW V0, V1, 5
+
+LD V0, 20
+LD I, sprite_t
+DRW V0, V1, 5
+
+LD V0, 24
+LD V2, 0x0A
+LD F, V2
+DRW V0, V1, 5
+
+LD V0, 29
+LD I, sprite_r
+DRW V0, V1, 5
+
+LD V0, 34
+LD I, sprite_t
+DRW V0, V1, 5
+
+LD V0, 38
+LD I, sprite_i
+DRW V0, V1, 5
+
+LD V0, 40
+LD I, sprite_n
+DRW V0, V1, 5
+
+LD V0, 45
+LD I, sprite_g
+DRW V0, V1, 5
+
+LD V1, 19 ; newline
+
+; SOON
+; 19 pixels wide total
+
+LD V0, 22
+LD I, sprite_s
+DRW V0, V1, 5
+
+LD V0, 27
+LD V2, 0x00
+LD F, V2
+DRW V0, V1, 5
+
+LD V0, 32
+LD V2, 0x00
+LD F, V2
+DRW V0, V1, 5
+
+LD V0, 37
+LD I, sprite_n
+DRW V0, V1, 5
+
+loop:
+    JP loop
+
+sprite_r:
+    DB 0xE0, 0x90, 0xE0, 0x90, 0x90
+
+sprite_s:
+    DB 0xF0, 0x80, 0xF0, 0x10, 0xF0
+
+sprite_t:
+    DB 0xE0, 0x40, 0x40, 0x40, 0x40
+
+sprite_m:
+    DB 0x88, 0xD8, 0xA8, 0x88, 0x88
+
+sprite_i:
+    DB 0x80, 0x80, 0x80, 0x80, 0x80
+
+sprite_n:
+    DB 0x90, 0xD0, 0xD0, 0xB0, 0xB0
+
+sprite_g:
+    DB 0xF0, 0x80, 0xB0, 0x90, 0xF0
