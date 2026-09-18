@@ -14,7 +14,7 @@ Developed live at:
 - [ ] Go through TODOs (in code)
 - [ ] More validations?
 - [ ] Error handling?
-- [ ] Add support for the `.byte` directive (same functionality as `DB`)
+- [ ] Add tests
 - [ ] Add support for the `INCBIN` directive?
   - <https://support.arm.com/documentation/dui0041/c/Assembler/Directives/INCBIN-directive>
 - [ ] Refactor
