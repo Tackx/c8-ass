@@ -3,7 +3,7 @@
 namespace ass
 {
 
-bool Operand::isCompatibleWith(const Operand& other)
+bool Operand::isCompatibleWith(const Operand& other) const
 {
     if (this->literalType.has_value() && other.literalType.has_value())
     {

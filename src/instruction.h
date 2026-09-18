@@ -38,7 +38,7 @@ struct Operand
     ArgType argType{};
     std::optional<LiteralType> literalType{};
 
-    bool isCompatibleWith(const Operand& other);
+    bool isCompatibleWith(const Operand& other) const;
 };
 
 struct InstructionDefinition
@@ -51,7 +51,7 @@ struct InstructionDefinition
 
 struct Instruction
 {
-    const InstructionDefinition* def{};
+    const InstructionDefinition* def;
     std::array<uint16_t, 3> operandValues{};
     uint16_t encodedHex{};
 };

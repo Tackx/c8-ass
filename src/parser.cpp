@@ -279,11 +279,54 @@ uint16_t Parser::parseAddress(const std::string& aString, uint8_t sourceValueBas
     return value;
 }
 
-// TODO: Move some code out to separate & testable functions?
-Instruction Parser::parseInstruction(const Token& mnem, const std::vector<Token>& args)
+auto Parser::findMatchingInstructionDefinition(const Token& mnem, const std::array<Operand, 3>& parsedOperandTypes, const std::vector<Token>& args)
 {
-    // Parse operand type for each arg
-    // Needed so we know how to parse the values down the line
+    auto match = std::ranges::find_if(
+        opTable,
+        [&](const InstructionDefinition& instr)
+        {
+            if (!equalsIgnoreCase(mnem.text, instr.mnem))
+            {
+                return false;
+            }
+
+            // If there's brackets in the arg, e.g. [i], it inflates the operandCount
+            // Decrement it to allow for proper comparison
+            auto realSize = args.size();
+
+            for (size_t i = 0; i < args.size(); i++)
+            {
+                if (args[i].type == TokenType::LBracket || args[i].type == TokenType::RBracket)
+                {
+                    realSize--;
+                }
+            }
+
+            if (realSize != instr.operandCount)
+            {
+                return false;
+            }
+
+            bool compatible = true;
+            for (size_t i = 0; i < instr.operandCount; i++)
+            {
+                if (!parsedOperandTypes[i].isCompatibleWith(instr.operands[i]))
+                {
+                    compatible = false;
+
+                    break;
+                }
+            }
+
+            return compatible;
+        }
+    );
+
+    return match;
+}
+
+std::array<Operand, 3> Parser::parseOperandTypes(const std::vector<Token>& args)
+{
     std::array<Operand, 3> parsedOperandTypes{};
 
     if (args.size() > 0)
@@ -351,67 +394,19 @@ Instruction Parser::parseInstruction(const Token& mnem, const std::vector<Token>
         }
     }
 
-    // Find matching instruction/op
-    auto match = std::ranges::find_if(
-        opTable,
-        [&](const InstructionDefinition& instr)
-        {
-            if (!equalsIgnoreCase(mnem.text, instr.mnem))
-            {
-                return false;
-            }
+    return parsedOperandTypes;
+}
 
-            // If there's brackets in the arg, e.g. [i], it inflates the operandCount
-            // Decrement it to allow for proper comparison
-            auto realSize = args.size();
+Instruction Parser::makeInstruction(const InstructionDefinition& def, const std::vector<Token>& args)
+{
+    auto out = Instruction{.def = &def};
 
-            for (size_t i = 0; i < args.size(); i++)
-            {
-                if (args[i].type == TokenType::LBracket || args[i].type == TokenType::RBracket)
-                {
-                    realSize--;
-                }
-            }
-
-            if (realSize != instr.operandCount)
-            {
-                return false;
-            }
-
-            bool compatible = true;
-            for (size_t i = 0; i < instr.operandCount; i++)
-            {
-                if (!parsedOperandTypes[i].isCompatibleWith(instr.operands[i]))
-                {
-                    compatible = false;
-
-                    break;
-                }
-            }
-
-            return compatible;
-        }
-    );
-
-    // Fix out of bounds access (CLS has no args, so we can't access args[0])
-    if (match == opTable.end())
-    {
-        throw std::runtime_error(std::format("{}:{}:{}: Invalid mnemonic + operand type combination", ass::filename, mnem.line, mnem.col));
-    }
-
-    InstructionDefinition instr = *match;
-
-    std::println("Found matching instruction in op table");
-
-    // Parse the arg values
+    auto rawHex{def.hex};
     std::array<uint16_t, 3> parsedOpValues{};
 
-    // Iterate over rawArgs. Parse each arg based on the found instr's operands array and push the parsed value into parsedOpValues. Then construct the
-    // Instruction struct.
-    auto rawHex{instr.hex};
-    if (!instr.operands.empty())
+    if (!def.operands.empty())
     {
-        for (size_t i = 0; i < instr.operandCount; i++)
+        for (size_t i = 0; i < def.operandCount; i++)
         {
             uint8_t sourceValueBase = 10;
 
@@ -423,7 +418,7 @@ Instruction Parser::parseInstruction(const Token& mnem, const std::vector<Token>
             }
 
             // TODO: Look into unhandled cases (maybe split the enum?)
-            switch (instr.operands[i].argType)
+            switch (def.operands[i].argType)
             {
             case ArgType::NONE:
                 break;
@@ -470,7 +465,7 @@ Instruction Parser::parseInstruction(const Token& mnem, const std::vector<Token>
 
             case ArgType::LITERAL:
             {
-                auto literalType = instr.operands[i].literalType;
+                auto literalType = def.operands[i].literalType;
 
                 if (!literalType.has_value())
                 {
@@ -535,10 +530,11 @@ Instruction Parser::parseInstruction(const Token& mnem, const std::vector<Token>
                     // Labels can only be used as address placeholders
                     // Check if label map contains the literal and if so,
                     // turn the label into the assigned address
-                    if (m_labelMemoryMap.contains(str))
+                    auto foundLabel = m_labelMemoryMap.find(str);
+                    if (foundLabel != m_labelMemoryMap.end())
                     {
-                        parsedOpValues[i] = m_labelMemoryMap[str].addr;
-                        rawHex |= m_labelMemoryMap[str].addr;
+                        parsedOpValues[i] = foundLabel->second.addr;
+                        rawHex |= foundLabel->second.addr;
 
                         break;
                     }
@@ -567,10 +563,29 @@ Instruction Parser::parseInstruction(const Token& mnem, const std::vector<Token>
         }
     }
 
-    return Instruction{
-        .def = match,
-        .operandValues = parsedOpValues,
-        .encodedHex = rawHex,
-    };
+    out.encodedHex = rawHex;
+    out.operandValues = parsedOpValues;
+
+    return out;
+}
+
+Instruction Parser::parseInstruction(const Token& mnem, const std::vector<Token>& args)
+{
+    // Parse operand type for each arg
+    // Needed so we know how to parse the values down the line
+    auto parsedOperandTypes = parseOperandTypes(args);
+
+    // Find matching instruction/op
+    auto match = findMatchingInstructionDefinition(mnem, parsedOperandTypes, args);
+    if (match == opTable.end())
+    {
+        throw std::runtime_error(std::format("{}:{}:{}: Invalid mnemonic + operand type combination", ass::filename, mnem.line, mnem.col));
+    }
+
+    InstructionDefinition definition = *match;
+
+    std::println("Found matching instruction in op table");
+
+    return makeInstruction(definition, args);
 }
 } // namespace ass

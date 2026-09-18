@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -30,6 +31,12 @@ class Parser
 
   private:
     static bool isDirective(const Token& mnem);
+
+    std::array<Operand, 3> parseOperandTypes(const std::vector<Token>& args);
+
+    auto findMatchingInstructionDefinition(const Token& mnem, const std::array<Operand, 3>& parsedOperandTypes, const std::vector<Token>& args);
+
+    Instruction makeInstruction(const InstructionDefinition& def, const std::vector<Token>& args);
 
     uint8_t parseRegister(std::string_view registerString);
 
