@@ -11,9 +11,10 @@ Developed live at:
 
 ## TODO
 
-- [ ] Fix lines not starting with label or a mnem being parsed incorrectly
-  - [ ] Could add a validation that it's either a label or a valid mnemonic (add an array of valid MNEMs?)
 - [ ] Go through TODOs (in code)
-- [ ] More validations
-- [ ] Error handling
+- [ ] More validations?
+- [ ] Error handling?
+- [ ] Add support for the `.byte` directive (same functionality as `DB`)
+- [ ] Add support for the `INCBIN` directive?
+  - <https://support.arm.com/documentation/dui0041/c/Assembler/Directives/INCBIN-directive>
 - [ ] Refactor
