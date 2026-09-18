@@ -29,7 +29,7 @@ class Parser
     std::vector<std::variant<Instruction, Directive>> parseInstructions(const std::vector<Token>& tokens);
 
   private:
-    static bool isDirective(std::string_view mnem);
+    static bool isDirective(const Token& mnem);
 
     uint8_t parseRegister(std::string_view registerString);
 
@@ -42,7 +42,7 @@ class Parser
 
     std::unordered_map<std::string, Label> m_labelMemoryMap;
 
-    Instruction parseInstruction(std::string_view mnem, const std::vector<Token>& args);
+    Instruction parseInstruction(const Token& mnem, const std::vector<Token>& args);
 };
 
 } // namespace ass

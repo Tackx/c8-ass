@@ -27,9 +27,9 @@ Parser::Parser()
 {
 }
 
-bool Parser::isDirective(std::string_view mnem)
+bool Parser::isDirective(const Token& mnem)
 {
-    auto foundDirective = std::find(supportedDirectives.begin(), supportedDirectives.end(), mnem);
+    auto foundDirective = std::find(supportedDirectives.begin(), supportedDirectives.end(), mnem.text);
 
     if (foundDirective != supportedDirectives.end())
     {
@@ -52,12 +52,13 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
             // It's a label
             const auto& key = std::string{token.text};
 
-            if (m_labelMemoryMap.contains(key))
+            const auto& foundKey = m_labelMemoryMap.find(key);
+            if (foundKey != m_labelMemoryMap.end())
             {
                 throw std::runtime_error(
                     std::format(
                         "{}:{}:{}: Duplicate label. Label {} is already defined on line {}:{}", ass::filename, token.line, token.col, token.text, ass::filename,
-                        m_labelMemoryMap[key].line
+                        foundKey->second.line
                     )
                 );
             }
@@ -74,7 +75,7 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
             }
         }
 
-        else if (token.type == TokenType::Identifier && isDirective(token.text))
+        else if (token.type == TokenType::Identifier && isDirective(token))
         {
             // TODO: Refactor this logic into a shared function (we're already doing a lot of similar parsing in parseInstruction)
 
@@ -154,7 +155,7 @@ std::vector<std::variant<Instruction, Directive>> Parser::parseInstructions(cons
 {
     std::vector<std::variant<Instruction, Directive>> out;
 
-    std::string_view mnem{};
+    Token mnem{};
     std::vector<Token> rawArgs{};
 
     // Is this the first identifier of a line?
@@ -175,9 +176,7 @@ std::vector<std::variant<Instruction, Directive>> Parser::parseInstructions(cons
         else if (token.type == TokenType::Identifier && firstIdentifier)
         {
             // It's a mnemonic
-            // TODO: Change mnem from a string to the Token struct
-            // (for more context, e.g. the line number)
-            mnem = token.text;
+            mnem = token;
         }
         else if (
             token.type == TokenType::Identifier || token.type == TokenType::Number || token.type == TokenType::LBracket || token.type == TokenType::RBracket
@@ -186,13 +185,13 @@ std::vector<std::variant<Instruction, Directive>> Parser::parseInstructions(cons
             // It's an arg
             rawArgs.push_back(token);
         }
-        else if ((token.type == TokenType::End || token.type == TokenType::Newline) && mnem != "")
+        else if ((token.type == TokenType::End || token.type == TokenType::Newline) && mnem.text != "")
         {
             std::variant<Instruction, Directive> parsed;
 
             if (isDirective(mnem))
             {
-                parsed = parseDirective({.text = mnem}, rawArgs);
+                parsed = parseDirective(mnem, rawArgs);
             }
             else
             {
@@ -201,7 +200,7 @@ std::vector<std::variant<Instruction, Directive>> Parser::parseInstructions(cons
 
             out.push_back(parsed);
 
-            mnem = "";
+            mnem = {};
             rawArgs = {};
             firstIdentifier = true;
 
@@ -281,7 +280,7 @@ uint16_t Parser::parseAddress(const std::string& aString, uint8_t sourceValueBas
 }
 
 // TODO: Move some code out to separate & testable functions?
-Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<Token>& args)
+Instruction Parser::parseInstruction(const Token& mnem, const std::vector<Token>& args)
 {
     // Parse operand type for each arg
     // Needed so we know how to parse the values down the line
@@ -357,7 +356,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
         opTable,
         [&](const InstructionDefinition& instr)
         {
-            if (!equalsIgnoreCase(mnem, instr.mnem))
+            if (!equalsIgnoreCase(mnem.text, instr.mnem))
             {
                 return false;
             }
@@ -397,7 +396,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
     // Fix out of bounds access (CLS has no args, so we can't access args[0])
     if (match == opTable.end())
     {
-        throw std::runtime_error(std::format("{}:{}: Invalid mnemonic + operand type combination", ass::filename, args[0].line));
+        throw std::runtime_error(std::format("{}:{}:{}: Invalid mnemonic + operand type combination", ass::filename, mnem.line, mnem.col));
     }
 
     InstructionDefinition instr = *match;
@@ -423,7 +422,7 @@ Instruction Parser::parseInstruction(std::string_view mnem, const std::vector<To
                 str = str.substr(2);
             }
 
-            // TODO: Look into unhandled cases
+            // TODO: Look into unhandled cases (maybe split the enum?)
             switch (instr.operands[i].argType)
             {
             case ArgType::NONE:
