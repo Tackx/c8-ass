@@ -27,8 +27,7 @@ bool Lexer::isArgSeparator(char c)
     return c == ',';
 }
 
-// TODO: Rename so it's clear it's not idempotent?
-std::vector<Token> Lexer::getTokens()
+std::vector<Token> Lexer::produceTokens()
 {
     std::vector<Token> out;
 
@@ -167,11 +166,13 @@ std::vector<Token> Lexer::getTokens()
         out.push_back(t);
     }
 
-    out.push_back(Token{
-        .type = TokenType::End,
-        .line = m_line,
-        .col = m_col,
-    });
+    out.push_back(
+        Token{
+            .type = TokenType::End,
+            .line = m_line,
+            .col = m_col,
+        }
+    );
 
     return out;
 }

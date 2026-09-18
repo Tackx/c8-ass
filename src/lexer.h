@@ -32,7 +32,7 @@ class Lexer
   public:
     Lexer(std::string_view fileContent);
 
-    std::vector<Token> getTokens();
+    std::vector<Token> produceTokens();
 
     // Static helpers
     static bool isWhitespace(char c);

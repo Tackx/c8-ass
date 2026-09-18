@@ -26,7 +26,7 @@ int assemble(int argc, char** argv)
         Parser parser{};
         Emitter emitter{flags};
 
-        auto tokens = lexer.getTokens();
+        auto tokens = lexer.produceTokens();
 
         // First pass, which only parses and stores labels + their memory addresses
         // for substitution in second pass
