@@ -77,9 +77,7 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
 
         else if (token.type == TokenType::Identifier && isDirective(token))
         {
-            // TODO: Refactor this logic into a shared function (we're already doing a lot of similar parsing in parseInstruction)
-
-            if (token.text == "DB")
+            if (token.text == "DB" || token.text == ".byte")
             {
                 i++;
 
@@ -120,7 +118,7 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
 
 Directive Parser::parseDirective(const Token& token, const std::vector<Token>& rawValues)
 {
-    if (token.text == "DB")
+    if (token.text == "DB" || token.text == ".byte")
     {
         std::vector<uint8_t> parsedValues{};
 
