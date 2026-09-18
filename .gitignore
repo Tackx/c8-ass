@@ -415,3 +415,4 @@ build/
 *.ch8
 compile_commands.json
 *_log.txt
+ROMS/
