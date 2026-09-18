@@ -8,6 +8,16 @@
 
 #include "flags.h"
 
+bool isSupportedFlag(std::string_view str)
+{
+    if (str == "-o")
+    {
+        return true;
+    }
+
+    return false;
+}
+
 Result getFlags(int argc, char** argv)
 {
     std::unordered_map<std::string, std::string> flags{};
@@ -26,7 +36,7 @@ Result getFlags(int argc, char** argv)
             // It's a flag
             currentFlag = arg;
 
-            if (arg != "-o")
+            if (!isSupportedFlag(arg))
             {
                 throw std::runtime_error(std::format("Unsupported flag {}", arg));
             }
@@ -36,11 +46,11 @@ Result getFlags(int argc, char** argv)
                 throw std::runtime_error("Missing value for flag");
             }
 
-            if (arg.starts_with('-'))
-            {
-                arg.remove_prefix(1);
-            }
-
+            // Remove the dash
+            //
+            // Note: "--" flags are technically supported,
+            // but this only removes the first one from its key in the map
+            arg.remove_prefix(1);
             flags[currentFlag] = std::string{};
 
             continue;
