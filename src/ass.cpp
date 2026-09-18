@@ -1,7 +1,6 @@
 #include <exception>
 #include <format>
 #include <print>
-#include <string>
 
 #include "ass.h"
 #include "emitter.h"
@@ -17,19 +16,15 @@ int assemble(int argc, char** argv)
 {
     static constexpr auto USAGE_MSG = "Usage: ass [FLAGS]... INPUT\n-o  Specifies the output path and filename. Default = current directory + 'output.ch8'\n";
 
-    // TODO: Move to Emitter
-    std::string outPath{"./output.ch8"};
-
     try
     {
-        // TODO: Use flags["-o"], currently the default outPath is always used
         auto [flags, inPath] = getFlags(argc, argv);
 
         auto fileContent = loadFileContent(inPath);
 
         Lexer lexer{fileContent};
         Parser parser{};
-        Emitter emitter{outPath};
+        Emitter emitter{flags};
 
         auto tokens = lexer.getTokens();
 

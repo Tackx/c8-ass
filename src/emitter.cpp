@@ -1,7 +1,9 @@
 
+#include <fstream>
 #include <ios>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -11,8 +13,17 @@
 namespace ass
 {
 
-Emitter::Emitter(const std::string& outPath) : m_fo{outPath, std::ios_base::binary}
+Emitter::Emitter(const std::unordered_map<std::string, std::string>& flags)
 {
+    std::string outPath{"./output.ch8"};
+
+    auto outFlag = flags.find("-o");
+    if (outFlag != flags.end())
+    {
+        outPath = outFlag->second;
+    }
+
+    m_fo = std::ofstream{outPath, std::ios_base::binary};
     if (!m_fo.is_open())
     {
         throw std::runtime_error("Cannot open output file");

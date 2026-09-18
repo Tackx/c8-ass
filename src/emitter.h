@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <string>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -12,7 +13,7 @@ namespace ass
 class Emitter
 {
   public:
-    explicit Emitter(const std::string& outPath);
+    explicit Emitter(const std::unordered_map<std::string, std::string>& flags);
 
     void emit(const std::vector<std::variant<Instruction, Directive>>& instructions);
 
