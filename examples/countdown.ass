@@ -1,0 +1,52 @@
+; Prints a countdown (seconds only atm), which resets upon reaching 0
+
+start:
+    LD  V0, 28                  ; low seconds x
+    LD  V1, 33                  ; high seconds x
+    LD  V2, 12                  ; shared y
+
+    LD  V3, 5                   ; start low seconds at digit 9 
+    LD  V4, 9                   ; start high seconds at digit 5
+
+draw:
+    CLS 
+    LD  F, V3                   ; point I at the font sprite for V3
+    DRW V0, V2, 5               ; draw it
+    LD  F, V4                   ; point I at the font sprite for V4
+    DRW V1, V2, 5               ; draw it
+
+    LD  V5, 60                  ; delay about a second
+    LD  DT, V5
+
+wait:
+    LD V5, DT
+    SE V5, 0   
+    JP wait
+
+decrement_low_s:
+    SNE V6, 1
+    JP decrement_high_s
+
+    SE V4, 0
+    ADD V4, 0xFF
+
+    SNE V4, 0
+    LD V6, 1 ; flag that marks we need to decrement high seconds on next iter
+
+    JP draw
+    
+decrement_high_s:
+    LD V6, 0 ; reset the flag
+
+    SNE V3, 0 ; if high seconds are already 0, start from the beginning
+    JP start
+
+    SE V3, 0
+    ADD V3, 0xFF
+
+    LD V4, 9
+
+    JP draw
+
+
+

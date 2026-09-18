@@ -1,4 +1,5 @@
 ; Draws "Stream Starting Soon" to the screen
+; Counter from "countdown.ass" also added at the bottom
 
 ; R [x] 0xE0, 0x90, 0xE0, 0x90, 0x90
 ; S [x] 0xF0, 0x80, 0xF0, 0x10, 0xF0
@@ -57,7 +58,7 @@ CLS
 ; 29 pixels wide total
 
 LD V0, 17
-LD V1, 7
+LD V1, 4
 LD I, sprite_s
 DRW V0, V1, 5
 
@@ -83,7 +84,7 @@ LD V0, 41
 LD I, sprite_m
 DRW V0, V1, 5
 
-LD V1, 13 ; newline
+LD V1, 10 ; newline
 
 ; STARTING
 ; 34 pixels wide total
@@ -121,7 +122,7 @@ LD V0, 45
 LD I, sprite_g
 DRW V0, V1, 5
 
-LD V1, 19 ; newline
+LD V1, 16 ; newline
 
 ; SOON
 ; 19 pixels wide total
@@ -144,8 +145,58 @@ LD V0, 37
 LD I, sprite_n
 DRW V0, V1, 5
 
-loop:
-    JP loop
+start:
+    LD  V0, 27                  ; low seconds x
+    LD  V1, 32                  ; high seconds x
+    LD  V2, 23                  ; shared y
+
+    LD  V3, 5                   ; start low seconds at digit 9 
+    LD  V4, 9                   ; start high seconds at digit 5
+
+
+draw:
+    LD  F, V3                   ; point I at the font sprite for V3
+    DRW V0, V2, 5               ; draw it
+    LD  F, V4                   ; point I at the font sprite for V4
+    DRW V1, V2, 5               ; draw it
+
+    LD  V5, 60                  ; delay about a second
+    LD  DT, V5
+
+wait:
+    LD V5, DT
+    SE V5, 0   
+    JP wait
+
+    ; Clear drawn timer
+    DRW V1, V2, 5
+    LD  F, V3               
+    DRW V0, V2, 5
+
+decrement_low_s:
+    SNE V6, 1
+    JP decrement_high_s
+
+    SE V4, 0
+    ADD V4, 0xFF
+
+    SNE V4, 0
+    LD V6, 1 ; flag that marks we need to decrement high seconds on next iter
+
+    JP draw
+    
+decrement_high_s:
+    LD V6, 0 ; reset the flag
+
+    SNE V3, 0 ; if high seconds are already 0, start from the beginning
+    JP start
+
+    SE V3, 0
+    ADD V3, 0xFF
+
+    LD V4, 9
+
+    JP draw
 
 sprite_r:
     DB 0xE0, 0x90, 0xE0, 0x90, 0x90
