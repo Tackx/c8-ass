@@ -1,6 +1,6 @@
 # C8-ass
 
-Custom CHIP-8 assembler (WIP)
+Custom assembler for my [CHIP-8 emulator](https://github.com/tackx/c8) (WIP)
 
 Developed live at:
 
