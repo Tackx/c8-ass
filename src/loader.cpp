@@ -44,6 +44,7 @@ std::string loadFileContent(const std::string& inputPath)
 
     if (isFileInput)
     {
+        ass::filename = "[STDIN]";
         // Try to load input from stdin
         buffer << std::cin.rdbuf();
 
