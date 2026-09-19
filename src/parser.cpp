@@ -325,6 +325,11 @@ auto Parser::findMatchingInstructionDefinition(const Token& mnem, const std::arr
 
 std::array<Operand, 3> Parser::parseOperandTypes(const std::vector<Token>& args)
 {
+    if (args.size() > 3)
+    {
+        throw std::runtime_error(std::format("{}:{}: Too many operands provided", ass::filename, args[0].line));
+    }
+
     std::array<Operand, 3> parsedOperandTypes{};
 
     if (args.size() > 0)
