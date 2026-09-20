@@ -2,6 +2,8 @@
 #include <cctype>
 #include <string_view>
 
+#include "util.h"
+
 namespace ass
 {
 bool equalsIgnoreCase(std::string_view s1, std::string_view s2)

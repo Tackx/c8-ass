@@ -8,6 +8,9 @@
 
 #include "flags.h"
 
+namespace ass
+{
+
 bool isSupportedFlag(std::string_view str)
 {
     if (str == "-o")
@@ -89,3 +92,5 @@ Result getFlags(int argc, char** argv)
 
     return {std::move(flags), std::move(inPath)};
 }
+
+} // namespace ass
