@@ -1,6 +1,8 @@
 #include <exception>
 #include <format>
 #include <print>
+#include <string>
+#include <unordered_map>
 
 #include "ass.h"
 #include "emitter.h"
@@ -11,6 +13,21 @@
 
 namespace ass
 {
+
+static constexpr auto defaultOutPath = "./output.ch8";
+
+std::string getOutPath(std::unordered_map<std::string, std::string> flags)
+{
+    std::string out{defaultOutPath};
+
+    auto outFlag = flags.find("-o");
+    if (outFlag != flags.end())
+    {
+        out = outFlag->second;
+    }
+
+    return out;
+}
 
 int assemble(int argc, char** argv)
 {
@@ -24,7 +41,10 @@ int assemble(int argc, char** argv)
 
         Lexer lexer{fileContent};
         Parser parser{};
-        Emitter emitter{flags};
+
+        const auto& outPath = getOutPath(flags);
+
+        Emitter emitter{outPath};
 
         auto tokens = lexer.produceTokens();
 
