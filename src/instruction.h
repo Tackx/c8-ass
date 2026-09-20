@@ -1,7 +1,6 @@
 #pragma once
 
 #include <array>
-#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <string_view>
@@ -154,7 +153,4 @@ constexpr std::array opTable = {
     InstructionDefinition{.mnem = "XOR", .hex = 0x8003, .operandCount = 2, .operands = {REG_X, REG_Y}},
 };
 
-Instruction parseInstruction(std::string_view mnem, std::vector<std::string_view> rawArgs, size_t lineNr);
-
-bool isCompatible(Operand first, Operand second);
 } // namespace ass
