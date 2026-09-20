@@ -1,38 +1,51 @@
+
 cmake_minimum_required(VERSION 3.28)
 
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "" FORCE)
+set(CMAKE_BUILD_TYPE Debug CACHE STRING "" FORCE)
 endif()
 
 project(c8-ass CXX)
+
+# Enable testing for the project
+include(CTest)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_executable(ass)
+Include(FetchContent)
 
-target_sources(ass PRIVATE
-    src/main.cpp
-    src/ass.cpp
-    src/instruction.cpp
-    src/instruction.h
-    src/ass.h
-    src/emitter.h
-    src/emitter.cpp
-    src/parser.h
-    src/parser.cpp
-    src/util.h
-    src/util.cpp
-    src/lexer.h
-    src/lexer.cpp
-    src/loader.cpp
-    src/loader.h
-    src/flags.cpp
-    src/flags.h
+FetchContent_Declare(
+  Catch2
+  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+  GIT_TAG        v3.8.1
 )
 
-target_include_directories(ass PRIVATE src)
+FetchContent_MakeAvailable(Catch2)
+
+list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
+include(Catch)
+
+add_library(ass_core STATIC
+    src/ass.cpp
+    src/instruction.cpp
+    src/emitter.cpp
+    src/parser.cpp
+    src/util.cpp
+    src/lexer.cpp
+    src/loader.cpp
+    src/flags.cpp
+)
+target_include_directories(ass_core PUBLIC src)
+
+add_executable(ass src/main.cpp)
+target_link_libraries(ass PRIVATE ass_core)
+
+add_executable(tests tests/test.cpp)
+target_link_libraries(tests PRIVATE ass_core Catch2::Catch2WithMain)
+
+catch_discover_tests(tests)
 
 if(MSVC)
     target_compile_options(ass PRIVATE /W4 /permissive-)
