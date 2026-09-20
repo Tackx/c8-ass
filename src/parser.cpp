@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <format>
 #include <print>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -594,7 +595,20 @@ Instruction Parser::parseInstruction(const Token& mnem, const std::vector<Token>
     auto match = findMatchingInstructionDefinition(mnem, parsedOperandTypes, args);
     if (match == opTable.end())
     {
-        throw std::runtime_error(std::format("{}:{}:{}: Invalid mnemonic + operand type combination", ass::filename, mnem.line, mnem.col));
+        std::string operands{};
+        for (const auto& [idx, op] : args | std::ranges::views::enumerate)
+        {
+            operands += op.text;
+
+            if (static_cast<unsigned long long>(idx) != args.size() - 1)
+            {
+                operands += ", ";
+            }
+        }
+
+        throw std::runtime_error(
+            std::format("{}:{}:{}: Invalid mnemonic + operand type combination: {} {}", ass::filename, mnem.line, mnem.col, mnem.text, operands)
+        );
     }
 
     InstructionDefinition definition = *match;
