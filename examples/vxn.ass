@@ -2,16 +2,16 @@
 
 CLS
 
-LD V0, 0
-LD V1, 0
+LD V0, 18
+LD V1, 12
 LD I, sprite_v
 DRW V0, V1, 5
 
-LD V0, 10
+LD V0, 28
 LD I, sprite_x
 DRW V0, V1, 5
 
-LD V0, 20
+LD V0, 38
 LD I, sprite_n
 DRW V0, V1, 5
 
