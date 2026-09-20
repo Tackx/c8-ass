@@ -325,75 +325,79 @@ auto Parser::findMatchingInstructionDefinition(const Token& mnem, const std::arr
 
 std::array<Operand, 3> Parser::parseOperandTypes(const std::vector<Token>& args)
 {
-    if (args.size() > 3)
-    {
-        throw std::runtime_error(std::format("{}:{}: Too many operands provided", ass::filename, args[0].line));
-    }
-
     std::array<Operand, 3> parsedOperandTypes{};
 
     if (args.size() > 0)
     {
+        size_t parsedOps = 0;
+
         for (size_t i = 0; i < args.size(); i++)
         {
+            if (parsedOps >= 3)
+            {
+                throw std::runtime_error(std::format("{}:{}: Too many operands provided", ass::filename, args[0].line));
+            }
+
             auto token = args[i];
 
             // [i] || [I]
             if (token.type == TokenType::LBracket && i + 2 < args.size() && args[i + 1].type == TokenType::Identifier &&
                 (args[i + 1].text == "I" || args[i + 1].text == "i") && args[i + 2].type == TokenType::RBracket)
             {
-                parsedOperandTypes[i] = {ArgType::I_MEM};
+                parsedOperandTypes[parsedOps] = {ArgType::I_MEM};
 
                 i += 2; // Skip the next 2 tokens
             }
 
             else if (token.type == TokenType::Identifier && (token.text == "I" || token.text == "i"))
             {
-                parsedOperandTypes[i] = {ArgType::I_REG};
+                parsedOperandTypes[parsedOps] = {ArgType::I_REG};
             }
 
             else if (
-                token.type == TokenType::Identifier && (token.text.starts_with("V") || token.text.starts_with("v")) && i > 0 &&
-                parsedOperandTypes[i - 1].argType == ArgType::REGISTER_X
+                token.type == TokenType::Identifier && (token.text.starts_with("V") || token.text.starts_with("v")) && parsedOps > 0 &&
+                parsedOperandTypes[parsedOps - 1].argType == ArgType::REGISTER_X
             )
             {
-                parsedOperandTypes[i] = {ArgType::REGISTER_Y};
+                parsedOperandTypes[parsedOps] = {ArgType::REGISTER_Y};
             }
 
             else if (token.type == TokenType::Identifier && (token.text.starts_with("V") || token.text.starts_with("v")))
             {
-                parsedOperandTypes[i] = {ArgType::REGISTER_X};
+                parsedOperandTypes[parsedOps] = {ArgType::REGISTER_X};
             }
 
             else if (token.type == TokenType::Identifier && (token.text == "DT" || token.text == "dt"))
             {
-                parsedOperandTypes[i] = {ArgType::DT};
+                parsedOperandTypes[parsedOps] = {ArgType::DT};
             }
 
             else if (token.type == TokenType::Identifier && (token.text == "K" || token.text == "k"))
             {
-                parsedOperandTypes[i] = {ArgType::KEY};
+                parsedOperandTypes[parsedOps] = {ArgType::KEY};
             }
 
             else if (token.type == TokenType::Identifier && (token.text == "ST" || token.text == "st"))
             {
-                parsedOperandTypes[i] = {ArgType::ST};
+                parsedOperandTypes[parsedOps] = {ArgType::ST};
             }
 
             else if (token.type == TokenType::Identifier && (token.text == "LF" || token.text == "lf" || token.text == "F" || token.text == "f"))
             {
-                parsedOperandTypes[i] = {ArgType::FONT};
+                parsedOperandTypes[parsedOps] = {ArgType::FONT};
             }
 
             else if (token.type == TokenType::Identifier && (token.text == "B" || token.text == "b"))
             {
-                parsedOperandTypes[i] = {ArgType::BCD};
+                parsedOperandTypes[parsedOps] = {ArgType::BCD};
             }
 
             else
             {
-                parsedOperandTypes[i] = {ArgType::LITERAL};
+                parsedOperandTypes[parsedOps] = {ArgType::LITERAL};
             }
+
+            parsedOps++;
         }
     }
 
@@ -409,8 +413,15 @@ Instruction Parser::makeInstruction(const InstructionDefinition& def, const std:
 
     if (!def.operands.empty())
     {
-        for (size_t i = 0; i < def.operandCount; i++)
+        size_t currentOperand = 0;
+
+        for (size_t i = 0; i < args.size(); i++)
         {
+            if (args[i].type == TokenType::LBracket || args[i].type == TokenType::RBracket)
+            {
+                continue;
+            }
+
             uint8_t sourceValueBase = 10;
 
             std::string str{args[i].text};
@@ -421,7 +432,7 @@ Instruction Parser::makeInstruction(const InstructionDefinition& def, const std:
             }
 
             // TODO: Look into unhandled cases (maybe split the enum?)
-            switch (def.operands[i].argType)
+            switch (def.operands[currentOperand].argType)
             {
             case ArgType::NONE:
                 break;
@@ -439,7 +450,7 @@ Instruction Parser::makeInstruction(const InstructionDefinition& def, const std:
                     throw std::runtime_error(std::format("{}:{}:{}: {}", ass::filename, args[i].line, args[i].col, e.what()));
                 }
 
-                parsedOpValues[i] = regNumber;
+                parsedOpValues[currentOperand] = regNumber;
 
                 rawHex |= regNumber << 8;
 
@@ -459,7 +470,7 @@ Instruction Parser::makeInstruction(const InstructionDefinition& def, const std:
                     throw std::runtime_error(std::format("{}:{}:{}: {}", ass::filename, args[i].line, args[i].col, e.what()));
                 }
 
-                parsedOpValues[i] = regNumber;
+                parsedOpValues[currentOperand] = regNumber;
 
                 rawHex |= regNumber << 4;
 
@@ -492,18 +503,17 @@ Instruction Parser::makeInstruction(const InstructionDefinition& def, const std:
                         throw std::runtime_error(std::format("{}:{}:{}: {}", ass::filename, args[i].line, args[i].col, e.what()));
                     }
 
-                    if (value < 1 || value > 8)
+                    if (value < 1 || value > 15)
                     {
                         throw std::runtime_error(
                             std::format(
-                                "{}:{}:{}: Failed to parse value of type N. The value must be between 1 and 8 (as this is only used by the "
-                                "DRW instruction). Provided value: {}",
-                                ass::filename, args[i].line, args[i].col, value
+                                "{}:{}:{}: Failed to parse value of type N. The value must be between 1 and 15. Provided value: {}", ass::filename,
+                                args[i].line, args[i].col, value
                             )
                         );
                     }
 
-                    parsedOpValues[i] = value;
+                    parsedOpValues[currentOperand] = value;
                     rawHex |= value;
 
                     break;
@@ -522,7 +532,7 @@ Instruction Parser::makeInstruction(const InstructionDefinition& def, const std:
                         throw std::runtime_error(std::format("{}:{}:{}: {}", ass::filename, args[i].line, args[i].col, e.what()));
                     }
 
-                    parsedOpValues[i] = value;
+                    parsedOpValues[currentOperand] = value;
                     rawHex |= value;
 
                     break;
@@ -536,7 +546,7 @@ Instruction Parser::makeInstruction(const InstructionDefinition& def, const std:
                     auto foundLabel = m_labelMemoryMap.find(str);
                     if (foundLabel != m_labelMemoryMap.end())
                     {
-                        parsedOpValues[i] = foundLabel->second.addr;
+                        parsedOpValues[currentOperand] = foundLabel->second.addr;
                         rawHex |= foundLabel->second.addr;
 
                         break;
@@ -553,7 +563,7 @@ Instruction Parser::makeInstruction(const InstructionDefinition& def, const std:
                         throw std::runtime_error(std::format("{}:{}:{}: {}", ass::filename, args[i].line, args[i].col, e.what()));
                     }
 
-                    parsedOpValues[i] = value;
+                    parsedOpValues[currentOperand] = value;
                     rawHex |= value;
 
                     break;
@@ -563,6 +573,8 @@ Instruction Parser::makeInstruction(const InstructionDefinition& def, const std:
             default:
                 break;
             }
+
+            currentOperand++;
         }
     }
 
