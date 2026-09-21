@@ -27,6 +27,8 @@ FetchContent_MakeAvailable(Catch2)
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 include(Catch)
 
+add_library(ass_warnings INTERFACE)
+
 add_library(ass_core STATIC
     src/ass.cpp
     src/instruction.cpp
@@ -37,24 +39,26 @@ add_library(ass_core STATIC
     src/loader.cpp
     src/flags.cpp
 )
+
 target_include_directories(ass_core PUBLIC src)
 
+target_link_libraries(ass_core PRIVATE ass_warnings)
+
 add_executable(ass src/main.cpp)
-target_link_libraries(ass PRIVATE ass_core)
+target_link_libraries(ass PRIVATE ass_core ass_warnings)
 
 add_executable(tests tests/test.cpp)
-target_link_libraries(tests PRIVATE ass_core Catch2::Catch2WithMain)
+target_link_libraries(tests PRIVATE ass_core ass_warnings Catch2::Catch2WithMain)
 
 catch_discover_tests(tests)
 
 if(MSVC)
-    target_compile_options(ass PRIVATE /W4 /permissive-)
+    target_compile_options(ass_warnings INTERFACE /W4 /permissive-)
 else()
-    target_compile_options(ass PRIVATE
+    target_compile_options(ass_warnings INTERFACE
         -Wall -Wextra -Wconversion -Wsign-conversion -Wshadow -Wpedantic)
 endif()
 
-
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_link_libraries(ass PRIVATE stdc++exp)
+    target_link_libraries(ass_core PRIVATE stdc++exp)
 endif()
