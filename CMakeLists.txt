@@ -47,7 +47,8 @@ target_link_libraries(ass_core PRIVATE ass_warnings)
 add_executable(ass src/main.cpp)
 target_link_libraries(ass PRIVATE ass_core ass_warnings)
 
-add_executable(tests tests/test.cpp)
+add_executable(tests tests/instructions.cpp
+  tests/e2e.cpp)
 target_link_libraries(tests PRIVATE ass_core ass_warnings Catch2::Catch2WithMain)
 
 catch_discover_tests(tests)
