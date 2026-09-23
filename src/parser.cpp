@@ -4,7 +4,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <format>
-#include <print>
 #include <ranges>
 #include <stdexcept>
 #include <string>
@@ -612,8 +611,6 @@ Instruction Parser::parseInstruction(const Token& mnem, const std::vector<Token>
     }
 
     InstructionDefinition definition = *match;
-
-    std::println("Found matching instruction in op table");
 
     return makeInstruction(definition, args);
 }
