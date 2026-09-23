@@ -24,18 +24,14 @@ void Emitter::emit(const std::vector<std::variant<Instruction, Directive>>& inpu
 {
     for (const auto& input : inputs)
     {
-        if (std::holds_alternative<Instruction>(input))
+        if (auto instr = std::get_if<Instruction>(&input))
         {
-            auto val = std::get<Instruction>(input);
-
-            m_fo.put(static_cast<char>(val.encodedHex >> 8));
-            m_fo.put(static_cast<char>(val.encodedHex & 0xFF));
+            m_fo.put(static_cast<char>(instr->encodedHex >> 8));
+            m_fo.put(static_cast<char>(instr->encodedHex & 0xFF));
         }
-        else if (std::holds_alternative<Directive>(input))
+        else if (auto dir = std::get_if<Directive>(&input))
         {
-            auto val = std::get<Directive>(input);
-
-            for (const auto& binary : val.values)
+            for (const auto& binary : dir->values)
             {
                 m_fo.put(static_cast<char>(binary));
             }
