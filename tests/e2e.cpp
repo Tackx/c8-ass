@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <iterator>
 
 #include "ass.h"
 
@@ -25,7 +26,7 @@ TEST_CASE("Happy day: Output flag + filepath arg provided", "[E2E]")
 {
     char* argv[] = {(char*)"ass", (char*)"-o", (char*)"output.ch8", (char*)"../tests/inputs/input.ass"};
 
-    auto output = ass::assemble(4, argv);
+    auto output = ass::assemble(std::size(argv), argv);
 
     REQUIRE(output == 0);
 }
@@ -35,7 +36,7 @@ TEST_CASE("Happy day: Only filepath arg provided", "[E2E]")
 {
     char* argv[] = {(char*)"ass", (char*)"../tests/inputs/input.ass"};
 
-    auto output = ass::assemble(2, argv);
+    auto output = ass::assemble(std::size(argv), argv);
 
     REQUIRE(output == 0);
 }
@@ -53,7 +54,7 @@ TEST_CASE("Happy day: Reading from a redirected stdin", "[E2E]")
 
     char* argv[] = {(char*)"ass"};
 
-    auto output = ass::assemble(1, argv);
+    auto output = ass::assemble(std::size(argv), argv);
 
     PORT_DUP2(old_stdin, STDIN_FD);
     PORT_CLOSE(old_stdin);
@@ -74,7 +75,7 @@ TEST_CASE("Happy day: Reading from a redirected stdin with an output flag used",
 
     char* argv[] = {(char*)"ass", (char*)"-o", (char*)"specific_output.ch8"};
 
-    auto output = ass::assemble(3, argv);
+    auto output = ass::assemble(std::size(argv), argv);
 
     PORT_DUP2(old_stdin, STDIN_FD);
     PORT_CLOSE(old_stdin);
@@ -87,7 +88,7 @@ TEST_CASE("Open output flag, only one follow-up argument. The input path cannot 
 {
     char* argv[] = {(char*)"ass", (char*)"-o", (char*)"../tests/inputs/input.ass"};
 
-    auto output = ass::assemble(3, argv);
+    auto output = ass::assemble(std::size(argv), argv);
 
     REQUIRE(output == 1);
 }
@@ -105,7 +106,7 @@ TEST_CASE("Open outplug flag, redirected stdin", "[E2E]")
 
     char* argv[] = {(char*)"ass", (char*)"-o"};
 
-    auto output = ass::assemble(2, argv);
+    auto output = ass::assemble(std::size(argv), argv);
 
     PORT_DUP2(old_stdin, STDIN_FD);
     PORT_CLOSE(old_stdin);
