@@ -1,5 +1,6 @@
 
 #include <cstdio>
+#include <filesystem>
 #include <fstream>
 #include <ios>
 #include <iostream>
@@ -52,5 +53,20 @@ std::string loadFileContent(const std::string& inputPath)
     }
 
     throw NoInputException("No input specified");
+}
+
+void ensureFilepathExists(std::string& filepath)
+{
+    auto path = std::filesystem::path{filepath};
+    path.remove_filename();
+
+    if (path.string().size() > 0)
+    {
+        std::filesystem::create_directories(path);
+    }
+    else
+    {
+        filepath = "./" + filepath;
+    }
 }
 } // namespace ass

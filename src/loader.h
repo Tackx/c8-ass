@@ -18,4 +18,6 @@ class NoInputException : public std::runtime_error
 
 std::string loadFileContent(const std::string& inputPath);
 
+void ensureFilepathExists(std::string& filepath);
+
 } // namespace ass

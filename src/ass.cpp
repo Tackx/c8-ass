@@ -42,7 +42,8 @@ int assemble(int argc, char** argv)
         Lexer lexer{fileContent};
         Parser parser{};
 
-        const auto& outPath = getOutPath(flags);
+        auto outPath = getOutPath(flags);
+        ensureFilepathExists(outPath);
 
         Emitter emitter{outPath};
 
@@ -56,6 +57,8 @@ int assemble(int argc, char** argv)
         auto parsedInstructions = parser.parseInstructions(tokens);
 
         emitter.emit(parsedInstructions);
+
+        std::println("ROM assembled successfully: {}", outPath);
 
         return 0;
     }
