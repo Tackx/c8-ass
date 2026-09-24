@@ -37,7 +37,7 @@ int assemble(int argc, char** argv)
     {
         auto [flags, inPath] = getFlags(argc, argv);
 
-        auto fileContent = loadFileContent(inPath);
+        auto fileContent = loadFileContentString(inPath);
 
         Lexer lexer{fileContent};
         Parser parser{};

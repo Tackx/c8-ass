@@ -1,7 +1,9 @@
 #pragma once
 
+#include <cstdint>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace ass
 {
@@ -16,8 +18,10 @@ class NoInputException : public std::runtime_error
     }
 };
 
-std::string loadFileContent(const std::string& inputPath);
+std::string loadFileContentString(const std::string& inputPath);
+std::vector<uint8_t> loadFileContentBytes(std::string& inputPath);
 
+std::string& removeQuotes(std::string& inputPath);
 void ensureFilepathExists(std::string& filepath);
 
 } // namespace ass

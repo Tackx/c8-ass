@@ -75,7 +75,7 @@ constexpr Operand KEY{ArgType::KEY};
 constexpr Operand FONT{ArgType::FONT};
 constexpr Operand BCD{ArgType::BCD};
 
-constexpr std::array supportedDirectives = {"DB", ".byte"};
+constexpr std::array supportedDirectives = {"DB", ".byte", "INCBIN"};
 
 constexpr std::array opTable = {
     // ADD

@@ -3,6 +3,7 @@
 #include <charconv>
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <format>
 #include <ranges>
 #include <stdexcept>
@@ -93,6 +94,44 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
 
                 continue;
             }
+
+            if (token.text == "INCBIN")
+            {
+                if (i + 1 >= tokens.size() || tokens[i + 1].type != TokenType::Identifier)
+                {
+                    throw std::runtime_error(
+                        std::format("{}:{}:{}: Expected an identifier with filename for the INCBIN directive to follow", ass::filename, token.line, token.col)
+                    );
+                }
+
+                const auto& filepathToken = tokens[i + 1];
+                auto inputPath = std::string{filepathToken.text};
+                auto trimmed = removeQuotes(inputPath);
+
+                auto exists = std::filesystem::exists(trimmed);
+                if (!exists)
+                {
+                    throw std::runtime_error(
+                        std::format("{}:{}:{}: The provided filepath does not exist: {}", ass::filename, filepathToken.line, filepathToken.col, trimmed)
+                    );
+                }
+
+                auto size = std::filesystem::file_size(trimmed);
+                if (size > 15)
+                {
+                    throw std::runtime_error(
+                        std::format(
+                            "{}:{}:{}: The provided file {} is too large (> 15 bytes): {}", ass::filename, filepathToken.line, filepathToken.col, trimmed, size
+                        )
+                    );
+                }
+
+                memPointer += static_cast<uint8_t>(size);
+
+                i++; // Skip the next token as we already handled the input filepath
+
+                continue;
+            }
         }
 
         if (token.type == TokenType::LBracket && i + 1 < tokens.size() && tokens[i + 1].type != TokenType::Identifier && tokens[i + 1].text != "i" &&
@@ -137,6 +176,28 @@ Directive Parser::parseDirective(const Token& token, const std::vector<Token>& r
 
             parsedValues.push_back(parsedValue);
         }
+
+        Directive directive{
+            .name = token.text,
+            .values = std::move(parsedValues),
+        };
+
+        return directive;
+    }
+
+    if (token.text == "INCBIN")
+    {
+        if (rawValues.size() > 1 || rawValues.size() <= 0)
+        {
+            throw std::runtime_error(
+                std::format(
+                    "{}:{}:{}: Unexpected number of arguments provided for the INCBIN directive: {}", ass::filename, token.line, token.col, rawValues.size()
+                )
+            );
+        }
+
+        auto inputPath = std::string{rawValues[0].text};
+        auto parsedValues = loadFileContentBytes(inputPath);
 
         Directive directive{
             .name = token.text,

@@ -11,5 +11,9 @@ Developed live at:
 
 ## TODO
 
-- [ ] Add support for the `INCBIN` directive?
-  - <https://support.arm.com/documentation/dui0041/c/Assembler/Directives/INCBIN-directive>
+- [ ] Add an example source file with the `INCBIN` directive
+- [ ] Add directive tests (right now there's only instructions)
+- [ ] Add "squiggles" + caret to error messages?
+- [ ] Test setting this up on Linux
+- [ ] Update README
+  - [ ] Add some more screenshots of the CLI output

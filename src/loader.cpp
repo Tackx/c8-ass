@@ -1,13 +1,17 @@
 
+#include <cstdint>
 #include <cstdio>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <ios>
 #include <iostream>
+#include <iterator>
 #include <sstream>
 #include <stdexcept>
 #include <stdio.h>
 #include <string>
+#include <vector>
 
 #ifdef _WIN32
 #include <io.h>
@@ -23,7 +27,7 @@
 namespace ass
 {
 
-std::string loadFileContent(const std::string& inputPath)
+std::string loadFileContentString(const std::string& inputPath)
 {
     std::stringstream buffer;
     bool isFileInput = !isatty(fileno(stdin));
@@ -53,6 +57,40 @@ std::string loadFileContent(const std::string& inputPath)
     }
 
     throw NoInputException("No input specified");
+}
+
+std::string& removeQuotes(std::string& inputPath)
+{
+    if (inputPath.starts_with("\""))
+    {
+        inputPath = inputPath.substr(1);
+    }
+
+    if (inputPath.ends_with("\""))
+    {
+        inputPath = inputPath.substr(0, inputPath.size() - 1);
+    }
+
+    return inputPath;
+}
+
+std::vector<uint8_t> loadFileContentBytes(std::string& inputPath)
+{
+    auto trimmed = removeQuotes(inputPath);
+
+    auto fileExists = std::filesystem::exists(trimmed);
+    if (!fileExists)
+    {
+        throw std::runtime_error(std::format("The provided filepath does not exist"));
+    }
+
+    std::ifstream inputStream{trimmed, std::ios_base::binary};
+
+    std::vector<uint8_t> bytes{(std::istreambuf_iterator<char>{inputStream}), (std::istreambuf_iterator<char>{})};
+
+    inputStream.close();
+
+    return bytes;
 }
 
 void ensureFilepathExists(std::string& filepath)
