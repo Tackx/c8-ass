@@ -78,6 +78,7 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
 
         else if (token.type == TokenType::Identifier && isDirective(token))
         {
+            // TODO: Use equalsIgnoreCase() to allow both cases - fix this in other places too
             if (token.text == "DB" || token.text == ".byte")
             {
                 i++;
@@ -95,6 +96,7 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
                 continue;
             }
 
+            // TODO: Use equalsIgnoreCase() to allow both cases - fix this in other places too
             if (token.text == "INCBIN")
             {
                 if (i + 1 >= tokens.size() || tokens[i + 1].type != TokenType::Identifier)
@@ -106,6 +108,8 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
 
                 const auto& filepathToken = tokens[i + 1];
                 auto inputPath = std::string{filepathToken.text};
+
+                // TODO: We should remove quotes in Lexer (just ignore them, don't turn them into tokens)
                 auto trimmed = removeQuotes(inputPath);
 
                 auto exists = std::filesystem::exists(trimmed);
@@ -129,6 +133,19 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
                 memPointer += static_cast<uint8_t>(size);
 
                 i++; // Skip the next token as we already handled the input filepath
+
+                if (i + 1 < tokens.size())
+                {
+                    auto nextToken = tokens[i + 1];
+                    if (nextToken.type == TokenType::Newline)
+                    {
+                        i++;
+                    }
+                    else if (nextToken.type != TokenType::End)
+                    {
+                        throw std::runtime_error(std::format("{}:{}:{}: Unexpected token '{}'", ass::filename, nextToken.line, nextToken.col, nextToken.text));
+                    }
+                }
 
                 continue;
             }
