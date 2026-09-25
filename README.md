@@ -11,7 +11,6 @@ Developed live at:
 
 ## TODO
 
-- [ ] Add an example source file with the `INCBIN` directive
 - [ ] Add directive tests (right now there's only instructions)
 - [ ] Add "squiggles" + caret to error messages?
 - [ ] Test setting this up on Linux

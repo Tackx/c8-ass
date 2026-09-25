@@ -1,0 +1,9 @@
+; Demonstrates using the INCBIN directive to include sprite files
+
+LD V0, 17
+LD V1, 4
+LD I, sprite_s
+DRW V0, V1, 5
+
+sprite_s:
+    INCBIN "tests/inputs/sprites/s.bin" ; Quotes are ignored  
