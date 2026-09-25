@@ -53,6 +53,13 @@ std::vector<Token> Lexer::produceTokens()
 
             continue;
         }
+        else if (m_text[m_cursor] == '"')
+        {
+            m_cursor++;
+            m_col++;
+
+            continue;
+        }
         else if (isWhitespace(m_text[m_cursor]))
         {
             m_cursor++;
@@ -60,7 +67,6 @@ std::vector<Token> Lexer::produceTokens()
 
             continue;
         }
-
         else if (isComment(m_text[m_cursor]))
         {
             while (m_cursor < m_text.length() && m_text[m_cursor] != '\n')
@@ -99,7 +105,6 @@ std::vector<Token> Lexer::produceTokens()
             m_cursor++;
             m_col++;
         }
-
         else if (std::isdigit(m_text[m_cursor]))
         {
             t.type = TokenType::Number;
@@ -142,7 +147,6 @@ std::vector<Token> Lexer::produceTokens()
 
             t.text = m_text.substr(start, m_cursor - start);
         }
-
         else // It's an identifier
         {
             t.type = TokenType::Identifier;
@@ -154,7 +158,7 @@ std::vector<Token> Lexer::produceTokens()
 
             while (m_cursor < m_text.length() && !isWhitespace(m_text[m_cursor]) && m_text[m_cursor] != '\n' && m_text[m_cursor] != '\r' &&
                    m_text[m_cursor] != ':' && !isArgSeparator(m_text[m_cursor]) && !isComment(m_text[m_cursor]) && m_text[m_cursor] != '[' &&
-                   m_text[m_cursor] != ']')
+                   m_text[m_cursor] != ']' && m_text[m_cursor] != '"')
             {
                 m_cursor++; // Move the cursor
                 m_col++;

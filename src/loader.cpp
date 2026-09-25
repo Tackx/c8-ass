@@ -59,32 +59,15 @@ std::string loadFileContentString(const std::string& inputPath)
     throw NoInputException("No input specified");
 }
 
-std::string& removeQuotes(std::string& inputPath)
+std::vector<uint8_t> loadFileContentBytes(const std::string& inputPath)
 {
-    if (inputPath.starts_with("\""))
-    {
-        inputPath = inputPath.substr(1);
-    }
-
-    if (inputPath.ends_with("\""))
-    {
-        inputPath = inputPath.substr(0, inputPath.size() - 1);
-    }
-
-    return inputPath;
-}
-
-std::vector<uint8_t> loadFileContentBytes(std::string& inputPath)
-{
-    auto trimmed = removeQuotes(inputPath);
-
-    auto fileExists = std::filesystem::exists(trimmed);
+    auto fileExists = std::filesystem::exists(inputPath);
     if (!fileExists)
     {
         throw std::runtime_error(std::format("The provided filepath does not exist"));
     }
 
-    std::ifstream inputStream{trimmed, std::ios_base::binary};
+    std::ifstream inputStream{inputPath, std::ios_base::binary};
 
     std::vector<uint8_t> bytes{(std::istreambuf_iterator<char>{inputStream}), (std::istreambuf_iterator<char>{})};
 

@@ -19,9 +19,8 @@ class NoInputException : public std::runtime_error
 };
 
 std::string loadFileContentString(const std::string& inputPath);
-std::vector<uint8_t> loadFileContentBytes(std::string& inputPath);
+std::vector<uint8_t> loadFileContentBytes(const std::string& inputPath);
 
-std::string& removeQuotes(std::string& inputPath);
 void ensureFilepathExists(std::string& filepath);
 
 } // namespace ass

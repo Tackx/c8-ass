@@ -106,25 +106,23 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
                 }
 
                 const auto& filepathToken = tokens[i + 1];
-                auto inputPath = std::string{filepathToken.text};
+                const auto& inputPath = std::string{filepathToken.text};
 
-                // TODO: We should remove quotes in Lexer (just ignore them, don't turn them into tokens)
-                auto trimmed = removeQuotes(inputPath);
-
-                auto exists = std::filesystem::exists(trimmed);
+                auto exists = std::filesystem::exists(inputPath);
                 if (!exists)
                 {
                     throw std::runtime_error(
-                        std::format("{}:{}:{}: The provided filepath does not exist: {}", ass::filename, filepathToken.line, filepathToken.col, trimmed)
+                        std::format("{}:{}:{}: The provided filepath does not exist: {}", ass::filename, filepathToken.line, filepathToken.col, inputPath)
                     );
                 }
 
-                auto size = std::filesystem::file_size(trimmed);
+                auto size = std::filesystem::file_size(inputPath);
                 if (size > 15)
                 {
                     throw std::runtime_error(
                         std::format(
-                            "{}:{}:{}: The provided file {} is too large (> 15 bytes): {}", ass::filename, filepathToken.line, filepathToken.col, trimmed, size
+                            "{}:{}:{}: The provided file {} is too large (> 15 bytes): {}", ass::filename, filepathToken.line, filepathToken.col, inputPath,
+                            size
                         )
                     );
                 }
