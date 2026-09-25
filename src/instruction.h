@@ -55,11 +55,15 @@ struct Instruction
     uint16_t encodedHex{};
 };
 
+bool operator==(const Instruction& a, const Instruction& b);
+
 struct Directive
 {
     std::string_view name{};
     std::vector<uint8_t> values{};
 };
+
+bool operator==(const Directive& a, const Directive& b);
 
 constexpr Operand REG_X{ArgType::REGISTER_X};
 constexpr Operand REG_Y{ArgType::REGISTER_Y};
@@ -77,7 +81,7 @@ constexpr Operand BCD{ArgType::BCD};
 
 constexpr std::array supportedDirectives = {"DB", ".byte", "INCBIN"};
 
-constexpr std::array opTable = {
+inline constexpr std::array opTable = {
     // ADD
     InstructionDefinition{.mnem = "ADD", .hex = 0x7000, .operandCount = 2, .operands = {REG_X, NN}},
     InstructionDefinition{.mnem = "ADD", .hex = 0x8004, .operandCount = 2, .operands = {REG_X, REG_Y}},

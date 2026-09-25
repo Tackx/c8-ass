@@ -479,14 +479,14 @@ std::array<Operand, 3> Parser::parseOperandTypes(const std::vector<Token>& args)
     return parsedOperandTypes;
 }
 
-Instruction Parser::makeInstruction(const InstructionDefinition& def, const std::vector<Token>& args)
+Instruction Parser::makeInstruction(const InstructionDefinition* def, const std::vector<Token>& args)
 {
-    auto out = Instruction{.def = &def};
+    auto out = Instruction{.def = def};
 
-    auto rawHex{def.hex};
+    auto rawHex{def->hex};
     std::array<uint16_t, 3> parsedOpValues{};
 
-    if (!def.operands.empty())
+    if (!def->operands.empty())
     {
         size_t currentOperand = 0;
 
@@ -506,7 +506,7 @@ Instruction Parser::makeInstruction(const InstructionDefinition& def, const std:
                 str = str.substr(2);
             }
 
-            switch (def.operands[currentOperand].argType)
+            switch (def->operands[currentOperand].argType)
             {
             case ArgType::NONE:
                 break;
@@ -553,7 +553,7 @@ Instruction Parser::makeInstruction(const InstructionDefinition& def, const std:
 
             case ArgType::LITERAL:
             {
-                auto literalType = def.operands[i].literalType;
+                auto literalType = def->operands[i].literalType;
 
                 if (!literalType.has_value())
                 {
@@ -693,8 +693,6 @@ Instruction Parser::parseInstruction(const Token& mnem, const std::vector<Token>
         );
     }
 
-    InstructionDefinition definition = *match;
-
-    return makeInstruction(definition, args);
+    return makeInstruction(match, args);
 }
 } // namespace ass

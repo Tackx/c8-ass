@@ -1,7 +1,18 @@
+#include <array>
 #include <catch2/catch_test_macros.hpp>
+#include <cstddef>
+#include <cstdint>
 #include <iterator>
+#include <ranges>
+#include <stdexcept>
+#include <variant>
+#include <vector>
 
 #include "ass.h"
+#include "instruction.h"
+#include "lexer.h"
+#include "loader.h"
+#include "parser.h"
 
 #ifdef _WIN32
 #include <fcntl.h>
@@ -120,4 +131,55 @@ TEST_CASE("No args provided", "[E2E]")
     auto output = ass::assemble(0, nullptr);
 
     REQUIRE(output == 1);
+}
+
+TEST_CASE("Instructions + Directives", "[E2E]")
+{
+    ass::filename = "<test>";
+
+    ass::Lexer l{"LD V0, 17\nLD V1, 4\nLD I, sprite_s\nDRW V0, V1, 5\n\nLD V0, 22\nLD I, sprite_r\nDRW V0, V1, 5\n\nsprite_s:\n    INCBIN "
+                 "\"../tests/inputs/sprites/s.bin\" ; Quotes are ignored\n\nsprite_r:\nDB    0xE0, 0x90, 0xE0, 0x90, 0x90"};
+
+    const auto tokens = l.produceTokens();
+    REQUIRE(tokens.size() == 62);
+
+    ass::Parser p{};
+    p.parseLabels(tokens);
+    auto output = p.parseInstructions(tokens);
+
+    std::vector<std::variant<ass::Instruction, ass::Directive>> expected{
+        ass::Instruction{.def = &ass::opTable[9], .operandValues = {0, 17, 0}, .encodedHex = 0x6011},
+        ass::Instruction{.def = &ass::opTable[9], .operandValues = {1, 4, 0}, .encodedHex = 0x6104},
+        ass::Instruction{.def = &ass::opTable[11], .operandValues = {0, 526, 0}, .encodedHex = 0xA20E},
+        ass::Instruction{.def = &ass::opTable[6], .operandValues = {0, 1, 5}, .encodedHex = 0xD015},
+        ass::Instruction{.def = &ass::opTable[9], .operandValues = {0, 22, 0}, .encodedHex = 0x6016},
+        ass::Instruction{.def = &ass::opTable[11], .operandValues = {0, 531, 0}, .encodedHex = 0xA213},
+        ass::Instruction{.def = &ass::opTable[6], .operandValues = {0, 1, 5}, .encodedHex = 0xD015},
+        ass::Directive{.name = "INCBIN", .values = std::vector<uint8_t>{0xF0, 0x80, 0xF0, 0x10, 0xF0}},
+        ass::Directive{.name = "DB", .values = std::vector<uint8_t>{0xE0, 0x90, 0xE0, 0x90, 0x90}}
+    };
+
+    REQUIRE(output.size() == expected.size());
+
+    for (const auto& [i, instr] : output | std::views::enumerate)
+    {
+        if (auto expectedValInstr = std::get_if<ass::Instruction>(&expected[(size_t)i]))
+        {
+            auto actualValueInstr = std::get<ass::Instruction>(instr);
+
+            REQUIRE(actualValueInstr == *expectedValInstr);
+        }
+
+        else if (auto expectedValDir = std::get_if<ass::Directive>(&expected[(size_t)i]))
+        {
+            auto actualValueDir = std::get<ass::Directive>(instr);
+
+            REQUIRE(actualValueDir == *expectedValDir);
+        }
+
+        else
+        {
+            throw std::runtime_error("Unsupported type in the list of expected values");
+        }
+    }
 }
