@@ -506,7 +506,6 @@ Instruction Parser::makeInstruction(const InstructionDefinition& def, const std:
                 str = str.substr(2);
             }
 
-            // TODO: Look into unhandled cases (maybe split the enum?)
             switch (def.operands[currentOperand].argType)
             {
             case ArgType::NONE:
@@ -645,7 +644,16 @@ Instruction Parser::makeInstruction(const InstructionDefinition& def, const std:
                 };
             }
 
-            default:
+            // These args require no further value parsing
+            // They are not included in the resulting hex value
+            case ArgType::UNKNOWN:
+            case ArgType::I_REG:
+            case ArgType::DT:
+            case ArgType::KEY:
+            case ArgType::ST:
+            case ArgType::FONT:
+            case ArgType::BCD:
+            case ArgType::I_MEM:
                 break;
             }
 

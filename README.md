@@ -11,7 +11,6 @@ Developed live at:
 
 ## TODO
 
-- [ ] TODOs in code
 - [ ] Add an example source file with the `INCBIN` directive
 - [ ] Add directive tests (right now there's only instructions)
 - [ ] Add "squiggles" + caret to error messages?
