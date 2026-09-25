@@ -30,7 +30,8 @@ Parser::Parser()
 
 bool Parser::isDirective(const Token& mnem)
 {
-    auto foundDirective = std::find(supportedDirectives.begin(), supportedDirectives.end(), mnem.text);
+    auto foundDirective =
+        std::find_if(supportedDirectives.begin(), supportedDirectives.end(), [&](const auto& elem) { return equalsIgnoreCase(elem, mnem.text); });
 
     if (foundDirective != supportedDirectives.end())
     {
@@ -78,8 +79,7 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
 
         else if (token.type == TokenType::Identifier && isDirective(token))
         {
-            // TODO: Use equalsIgnoreCase() to allow both cases - fix this in other places too
-            if (token.text == "DB" || token.text == ".byte")
+            if (equalsIgnoreCase(token.text, "DB") || equalsIgnoreCase(token.text, ".byte"))
             {
                 i++;
 
@@ -96,8 +96,7 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
                 continue;
             }
 
-            // TODO: Use equalsIgnoreCase() to allow both cases - fix this in other places too
-            if (token.text == "INCBIN")
+            if (equalsIgnoreCase(token.text, "INCBIN"))
             {
                 if (i + 1 >= tokens.size() || tokens[i + 1].type != TokenType::Identifier)
                 {
@@ -174,7 +173,7 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
 
 Directive Parser::parseDirective(const Token& token, const std::vector<Token>& rawValues)
 {
-    if (token.text == "DB" || token.text == ".byte")
+    if (equalsIgnoreCase(token.text, "DB") || equalsIgnoreCase(token.text, ".byte"))
     {
         std::vector<uint8_t> parsedValues{};
 
@@ -202,7 +201,7 @@ Directive Parser::parseDirective(const Token& token, const std::vector<Token>& r
         return directive;
     }
 
-    if (token.text == "INCBIN")
+    if (equalsIgnoreCase(token.text, "INCBIN"))
     {
         if (rawValues.size() > 1 || rawValues.size() <= 0)
         {
