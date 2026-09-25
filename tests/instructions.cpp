@@ -6,7 +6,7 @@
 #include "loader.h"
 #include "parser.h"
 
-TEST_CASE("CLS", "[parser]")
+TEST_CASE("CLS", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -27,7 +27,7 @@ TEST_CASE("CLS", "[parser]")
     REQUIRE(val.encodedHex == 0x00E0);
 }
 
-TEST_CASE("CLS with a newline", "[parser]")
+TEST_CASE("CLS with a newline", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -48,7 +48,7 @@ TEST_CASE("CLS with a newline", "[parser]")
     REQUIRE(val.encodedHex == 0x00E0);
 }
 
-TEST_CASE("ADD 7xnn", "[parser]")
+TEST_CASE("ADD 7xnn", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -69,7 +69,7 @@ TEST_CASE("ADD 7xnn", "[parser]")
     REQUIRE(val.encodedHex == 0x707B);
 }
 
-TEST_CASE("ADD 8xy4", "[parser]")
+TEST_CASE("ADD 8xy4", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -90,7 +90,7 @@ TEST_CASE("ADD 8xy4", "[parser]")
     REQUIRE(val.encodedHex == 0x8014);
 }
 
-TEST_CASE("ADD Fx1E", "[parser]")
+TEST_CASE("ADD Fx1E", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -111,7 +111,7 @@ TEST_CASE("ADD Fx1E", "[parser]")
     REQUIRE(val.encodedHex == 0xF11E);
 }
 
-TEST_CASE("AND 8xy2", "[parser]")
+TEST_CASE("AND 8xy2", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -132,7 +132,7 @@ TEST_CASE("AND 8xy2", "[parser]")
     REQUIRE(val.encodedHex == 0x8142);
 }
 
-TEST_CASE("CALL 2nnn hex", "[parser]")
+TEST_CASE("CALL 2nnn hex", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -153,7 +153,7 @@ TEST_CASE("CALL 2nnn hex", "[parser]")
     REQUIRE(val.encodedHex == 0x2123);
 }
 
-TEST_CASE("CALL 2nnn decimal", "[parser]")
+TEST_CASE("CALL 2nnn decimal", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -174,7 +174,7 @@ TEST_CASE("CALL 2nnn decimal", "[parser]")
     REQUIRE(val.encodedHex == 0x207B);
 }
 
-TEST_CASE("DRW Dxyn", "[parser]")
+TEST_CASE("DRW Dxyn", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -195,7 +195,7 @@ TEST_CASE("DRW Dxyn", "[parser]")
     REQUIRE(val.encodedHex == 0xD015);
 }
 
-TEST_CASE("JP 1nnn", "[parser]")
+TEST_CASE("JP 1nnn", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -216,7 +216,7 @@ TEST_CASE("JP 1nnn", "[parser]")
     REQUIRE(val.encodedHex == 0x1123);
 }
 
-TEST_CASE("JP0 1nnn", "[parser]")
+TEST_CASE("JP0 1nnn", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -237,7 +237,7 @@ TEST_CASE("JP0 1nnn", "[parser]")
     REQUIRE(val.encodedHex == 0xB123);
 }
 
-TEST_CASE("LD 6xnn", "[parser]")
+TEST_CASE("LD 6xnn", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -258,7 +258,7 @@ TEST_CASE("LD 6xnn", "[parser]")
     REQUIRE(val.encodedHex == 0x60FF);
 }
 
-TEST_CASE("LD 8xy0", "[parser]")
+TEST_CASE("LD 8xy0", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -279,7 +279,7 @@ TEST_CASE("LD 8xy0", "[parser]")
     REQUIRE(val.encodedHex == 0x8010);
 }
 
-TEST_CASE("LD Annn", "[parser]")
+TEST_CASE("LD Annn", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -300,7 +300,7 @@ TEST_CASE("LD Annn", "[parser]")
     REQUIRE(val.encodedHex == 0xA123);
 }
 
-TEST_CASE("LD Fx07", "[parser]")
+TEST_CASE("LD Fx07", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -321,7 +321,7 @@ TEST_CASE("LD Fx07", "[parser]")
     REQUIRE(val.encodedHex == 0xF007);
 }
 
-TEST_CASE("LD Fx0A", "[parser]")
+TEST_CASE("LD Fx0A", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -342,7 +342,7 @@ TEST_CASE("LD Fx0A", "[parser]")
     REQUIRE(val.encodedHex == 0xF00A);
 }
 
-TEST_CASE("LD Fx15", "[parser]")
+TEST_CASE("LD Fx15", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -363,7 +363,7 @@ TEST_CASE("LD Fx15", "[parser]")
     REQUIRE(val.encodedHex == 0xF715);
 }
 
-TEST_CASE("LD Fx18", "[parser]")
+TEST_CASE("LD Fx18", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -384,7 +384,7 @@ TEST_CASE("LD Fx18", "[parser]")
     REQUIRE(val.encodedHex == 0xFF18);
 }
 
-TEST_CASE("LD Fx29", "[parser]")
+TEST_CASE("LD Fx29", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -405,7 +405,7 @@ TEST_CASE("LD Fx29", "[parser]")
     REQUIRE(val.encodedHex == 0xFA29);
 }
 
-TEST_CASE("LD Fx33", "[parser]")
+TEST_CASE("LD Fx33", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -426,7 +426,7 @@ TEST_CASE("LD Fx33", "[parser]")
     REQUIRE(val.encodedHex == 0xF533);
 }
 
-TEST_CASE("LD Fx55", "[parser]")
+TEST_CASE("LD Fx55", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -447,7 +447,7 @@ TEST_CASE("LD Fx55", "[parser]")
     REQUIRE(val.encodedHex == 0xF855);
 }
 
-TEST_CASE("LD Fx65", "[parser]")
+TEST_CASE("LD Fx65", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -468,7 +468,7 @@ TEST_CASE("LD Fx65", "[parser]")
     REQUIRE(val.encodedHex == 0xF365);
 }
 
-TEST_CASE("OR 8xy1", "[parser]")
+TEST_CASE("OR 8xy1", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -489,7 +489,7 @@ TEST_CASE("OR 8xy1", "[parser]")
     REQUIRE(val.encodedHex == 0x8191);
 }
 
-TEST_CASE("RET 00EE", "[parser]")
+TEST_CASE("RET 00EE", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -510,7 +510,7 @@ TEST_CASE("RET 00EE", "[parser]")
     REQUIRE(val.encodedHex == 0x00EE);
 }
 
-TEST_CASE("RND Cxnn", "[parser]")
+TEST_CASE("RND Cxnn", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -531,7 +531,7 @@ TEST_CASE("RND Cxnn", "[parser]")
     REQUIRE(val.encodedHex == 0xC2AF);
 }
 
-TEST_CASE("SE 3xnn", "[parser]")
+TEST_CASE("SE 3xnn", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -552,7 +552,7 @@ TEST_CASE("SE 3xnn", "[parser]")
     REQUIRE(val.encodedHex == 0x301E);
 }
 
-TEST_CASE("SE 5xy0", "[parser]")
+TEST_CASE("SE 5xy0", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -573,7 +573,7 @@ TEST_CASE("SE 5xy0", "[parser]")
     REQUIRE(val.encodedHex == 0x5010);
 }
 
-TEST_CASE("SHL 8xyE", "[parser]")
+TEST_CASE("SHL 8xyE", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -594,7 +594,7 @@ TEST_CASE("SHL 8xyE", "[parser]")
     REQUIRE(val.encodedHex == 0x805E);
 }
 
-TEST_CASE("SHR 8xy6", "[parser]")
+TEST_CASE("SHR 8xy6", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -615,7 +615,7 @@ TEST_CASE("SHR 8xy6", "[parser]")
     REQUIRE(val.encodedHex == 0x8056);
 }
 
-TEST_CASE("SKNP ExA1", "[parser]")
+TEST_CASE("SKNP ExA1", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -636,7 +636,7 @@ TEST_CASE("SKNP ExA1", "[parser]")
     REQUIRE(val.encodedHex == 0xEBA1);
 }
 
-TEST_CASE("SKP Ex9E", "[parser]")
+TEST_CASE("SKP Ex9E", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -657,7 +657,7 @@ TEST_CASE("SKP Ex9E", "[parser]")
     REQUIRE(val.encodedHex == 0xEE9E);
 }
 
-TEST_CASE("SNE 4xnn", "[parser]")
+TEST_CASE("SNE 4xnn", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -678,7 +678,7 @@ TEST_CASE("SNE 4xnn", "[parser]")
     REQUIRE(val.encodedHex == 0x46AB);
 }
 
-TEST_CASE("SNE 9xy0", "[parser]")
+TEST_CASE("SNE 9xy0", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -699,7 +699,7 @@ TEST_CASE("SNE 9xy0", "[parser]")
     REQUIRE(val.encodedHex == 0x90F0);
 }
 
-TEST_CASE("SUB 8xy5", "[parser]")
+TEST_CASE("SUB 8xy5", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -720,7 +720,7 @@ TEST_CASE("SUB 8xy5", "[parser]")
     REQUIRE(val.encodedHex == 0x8FA5);
 }
 
-TEST_CASE("SUBN 8xy7", "[parser]")
+TEST_CASE("SUBN 8xy7", "[instructions]")
 {
     ass::filename = "<test>";
 
@@ -741,7 +741,7 @@ TEST_CASE("SUBN 8xy7", "[parser]")
     REQUIRE(val.encodedHex == 0x89A7);
 }
 
-TEST_CASE("XOR 8xy3", "[parser]")
+TEST_CASE("XOR 8xy3", "[instructions]")
 {
     ass::filename = "<test>";
 
