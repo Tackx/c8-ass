@@ -18,4 +18,5 @@ Developed live at:
 - [ ] Test setting this up on Linux
 - [ ] Update README
   - [ ] Add some more screenshots of the CLI output
+- [ ] Add support for expressions?
 - [ ] Full support for chipper syntax?
