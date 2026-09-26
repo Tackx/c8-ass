@@ -12,6 +12,8 @@ Developed live at:
 ## TODO
 
 - [ ] Add time elapsed into final msg output
+- [ ] Add colored output
+  - [ ] Only use it if stdout is not a file
 - [ ] Make paths for the `INCBIN` directive relative to the source file?
 - [ ] Add "squiggles" + caret to error messages?
 - [ ] Test setting this up on Linux

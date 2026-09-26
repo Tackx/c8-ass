@@ -10,6 +10,7 @@
 #include "lexer.h"
 #include "loader.h"
 #include "parser.h"
+#include "util.h"
 
 namespace ass
 {
@@ -35,6 +36,8 @@ int assemble(int argc, char** argv)
 
     try
     {
+        auto timer = Timer::Start();
+
         auto [flags, inPath] = getFlags(argc, argv);
 
         auto fileContent = loadFileContentString(inPath);
