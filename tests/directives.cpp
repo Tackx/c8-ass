@@ -32,6 +32,30 @@ TEST_CASE("DB", "[directives]")
     REQUIRE(val->values == expected);
 }
 
+TEST_CASE("DB with decimal and hex numbers mixed", "[directives]")
+{
+    ass::filename = "<test>";
+
+    ass::Lexer l{"DB 15, 0x90, 0xE0, 0x90, 255"};
+    const auto tokens = l.produceTokens();
+
+    ass::Parser p{};
+    p.parseLabels(tokens);
+    auto output = p.parseInstructions(tokens);
+
+    REQUIRE(output.size() == 1);
+
+    auto dir = output[0];
+
+    auto val = std::get_if<ass::Directive>(&dir);
+
+    REQUIRE(val != nullptr);
+    REQUIRE(val->name == "DB");
+
+    std::vector<uint8_t> expected{0x0F, 0x90, 0xE0, 0x90, 0xFF};
+    REQUIRE(val->values == expected);
+}
+
 TEST_CASE("DB but lowercase", "[directives]")
 {
     ass::filename = "<test>";

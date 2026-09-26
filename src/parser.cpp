@@ -175,11 +175,21 @@ Directive Parser::parseDirective(const Token& token, const std::vector<Token>& r
     {
         std::vector<uint8_t> parsedValues{};
 
-        for (const auto& v : rawValues)
+        for (auto v : rawValues)
         {
             uint8_t parsedValue{};
+            uint8_t base = 16;
 
-            auto err = std::from_chars(v.text.data() + 2, v.text.data() + v.text.size(), parsedValue, 16);
+            if (v.text.starts_with("0x"))
+            {
+                v.text.remove_prefix(2);
+            }
+            else
+            {
+                base = 10;
+            }
+
+            auto err = std::from_chars(v.text.data(), v.text.data() + v.text.size(), parsedValue, base);
 
             if (err.ec != std::errc{})
             {

@@ -11,7 +11,6 @@ Developed live at:
 
 ## TODO
 
-- [ ] Allow (or prevent) decimal numbers for bytes in the `DB` directive
 - [ ] Add time elapsed into final msg output
 - [ ] Make paths for the `INCBIN` directive relative to the source file?
 - [ ] Add "squiggles" + caret to error messages?
