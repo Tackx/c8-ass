@@ -9,6 +9,7 @@
 #include "flags.h"
 #include "lexer.h"
 #include "loader.h"
+#include "logger.h"
 #include "parser.h"
 #include "util.h"
 
@@ -62,6 +63,8 @@ int assemble(int argc, char** argv)
         emitter.emit(parsedInstructions);
 
         std::println("ROM assembled successfully: {}", outPath);
+
+        Logger::Debug("YOOO IT'S DEBUG FROM THE CLASS!!!!! {}", "aaaaaa");
 
         return 0;
     }

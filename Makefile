@@ -10,7 +10,7 @@ run: build
 build-release:
 	cmake -B build/release -G Ninja -DCMAKE_CXX_COMPILER=C:/msys64/mingw64/bin/g++.exe -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF && cmake --build build/release --parallel
 
-run-release:
+run-release: build-release
 	./build/release/ass.exe test.ass
 
 .PHONY: build test run
