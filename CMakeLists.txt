@@ -38,7 +38,6 @@ add_library(ass_core STATIC
 )
 
 target_include_directories(ass_core PUBLIC src)
-target_compile_definitions(ass_core PUBLIC $<$<CONFIG:Debug>:DEBUG>)
 target_link_libraries(ass_core PRIVATE ass_warnings)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
