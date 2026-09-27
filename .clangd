@@ -3,5 +3,5 @@ Diagnostics:
   MissingIncludes: Strict
 
 CompileFlags:
-  CompilationDatabase: build
+  CompilationDatabase: build/debug
   Add: [--target=x86_64-w64-mingw32, -Wno-c2y-extensions]
