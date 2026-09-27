@@ -146,19 +146,31 @@ LD I, sprite_n
 DRW V0, V1, 5
 
 start:
-    LD  V0, 27                  ; low seconds x
-    LD  V1, 32                  ; high seconds x
+    LD  V9, 23                  ; minutes
+
+    LD  VA, 28                  ; colon x
+
+    LD  V0, 32                  ; low seconds x
+    LD  V1, 37                  ; high seconds x
     LD  V2, 23                  ; shared y
 
+    LD  V7, 4                   ; 4:59 start
     LD  V3, 5                   ; start low seconds at digit 9 
     LD  V4, 9                   ; start high seconds at digit 5
 
-
 draw:
+    LD  F, V7                   ; point I at the font sprite for V7
+    DRW V9, V2, 5               ; draw it
+
+    LD I, sprite_colon
+    DRW VA, V2, 5
+
     LD  F, V3                   ; point I at the font sprite for V3
     DRW V0, V2, 5               ; draw it
+
     LD  F, V4                   ; point I at the font sprite for V4
     DRW V1, V2, 5               ; draw it
+
 
     LD  V5, 60                  ; delay about a second
     LD  DT, V5
@@ -168,8 +180,16 @@ wait:
     SE V5, 0   
     JP wait
 
-    ; Clear drawn timer
+clear_screen:
+    LD  F, V7 
+    DRW V9, V2, 5
+
+    LD I, sprite_colon
+    DRW VA, V2, 5
+
+    LD  F, V4               
     DRW V1, V2, 5
+
     LD  F, V3               
     DRW V0, V2, 5
 
@@ -186,14 +206,31 @@ decrement_low_s:
     JP draw
     
 decrement_high_s:
-    LD V6, 0 ; reset the flag
+    LD V6, 0 ; reset the high seconds decrement flag
 
-    SNE V3, 0 ; if high seconds are already 0, start from the beginning
-    JP start
+    SNE V8, 1
+    JP decrement_m
 
     SE V3, 0
     ADD V3, 0xFF
 
+    LD V4, 9
+
+    SNE V3, 0
+    LD V8, 1 ; flag that marks we need to decrement high seconds on next iter
+
+    JP draw
+
+decrement_m:
+    LD V8, 0 ; reset the minutes decrement flag
+
+    SNE V7, 0 ; if minutes are already 0, start from the beginning
+    JP start
+
+    SE V7, 0
+    ADD V7, 0xFF
+
+    LD V3, 5
     LD V4, 9
 
     JP draw
@@ -218,3 +255,6 @@ sprite_n:
 
 sprite_g:
     DB 0xF0, 0x80, 0xB0, 0x90, 0xF0
+
+sprite_colon:
+    DB 0x00, 0x40, 0x00, 0x40, 0x00
