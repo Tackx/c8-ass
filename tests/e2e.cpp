@@ -32,32 +32,32 @@
 
 constexpr int STDIN_FD = 0;
 
-// ./ass -o output.ch8 ../tests/inputs/input.ass
+// ./ass -o output.ch8 ../../../tests/inputs/input.ass
 TEST_CASE("Happy day: Output flag + filepath arg provided", "[E2E]")
 {
-    char* argv[] = {(char*)"ass", (char*)"-o", (char*)"output.ch8", (char*)"../tests/inputs/input.ass"};
+    char* argv[] = {(char*)"ass", (char*)"-o", (char*)"output.ch8", (char*)"../../../tests/inputs/input.ass"};
 
     auto output = ass::assemble(std::size(argv), argv);
 
     REQUIRE(output == 0);
 }
 
-// ./ass ../tests/inputs/input.ass
+// ./ass ../../../tests/inputs/input.ass
 TEST_CASE("Happy day: Only filepath arg provided", "[E2E]")
 {
-    char* argv[] = {(char*)"ass", (char*)"../tests/inputs/input.ass"};
+    char* argv[] = {(char*)"ass", (char*)"../../../tests/inputs/input.ass"};
 
     auto output = ass::assemble(std::size(argv), argv);
 
     REQUIRE(output == 0);
 }
 
-// ./ass < ../tests/inputs/input.ass
+// ./ass < ../../../tests/inputs/input.ass
 TEST_CASE("Happy day: Reading from a redirected stdin", "[E2E]")
 {
     auto old_stdin = PORT_DUP(STDIN_FD);
 
-    auto fd = PORT_OPEN("../tests/inputs/input.ass");
+    auto fd = PORT_OPEN("../../../tests/inputs/input.ass");
     REQUIRE(fd != -1);
 
     PORT_DUP2(fd, STDIN_FD);
@@ -73,12 +73,12 @@ TEST_CASE("Happy day: Reading from a redirected stdin", "[E2E]")
     REQUIRE(output == 0);
 }
 
-// ./ass -o output.ch8 < ../tests/inputs/input.ass
+// ./ass -o output.ch8 < ../../../tests/inputs/input.ass
 TEST_CASE("Happy day: Reading from a redirected stdin with an output flag used", "[E2E]")
 {
     auto old_stdin = PORT_DUP(STDIN_FD);
 
-    auto fd = PORT_OPEN("../tests/inputs/input.ass");
+    auto fd = PORT_OPEN("../../../tests/inputs/input.ass");
     REQUIRE(fd != -1);
 
     PORT_DUP2(fd, STDIN_FD);
@@ -94,22 +94,22 @@ TEST_CASE("Happy day: Reading from a redirected stdin with an output flag used",
     REQUIRE(output == 0);
 }
 
-// ./ass -o ../tests/inputs/input.ass
+// ./ass -o ../../../tests/inputs/input.ass
 TEST_CASE("Open output flag, only one follow-up argument. The input path cannot be determined.", "[E2E]")
 {
-    char* argv[] = {(char*)"ass", (char*)"-o", (char*)"../tests/inputs/input.ass"};
+    char* argv[] = {(char*)"ass", (char*)"-o", (char*)"../../../tests/inputs/input.ass"};
 
     auto output = ass::assemble(std::size(argv), argv);
 
     REQUIRE(output == 1);
 }
 
-// ./ass -o < ../tests/inputs/input.ass
+// ./ass -o < ../../../tests/inputs/input.ass
 TEST_CASE("Open outplug flag, redirected stdin", "[E2E]")
 {
     auto old_stdin = PORT_DUP(STDIN_FD);
 
-    auto fd = PORT_OPEN("../tests/inputs/input.ass");
+    auto fd = PORT_OPEN("../../../tests/inputs/input.ass");
     REQUIRE(fd != -1);
 
     PORT_DUP2(fd, STDIN_FD);
@@ -138,7 +138,7 @@ TEST_CASE("Instructions + Directives", "[E2E]")
     ass::filename = "<test>";
 
     ass::Lexer l{"LD V0, 17\nLD V1, 4\nLD I, sprite_s\nDRW V0, V1, 5\n\nLD V0, 22\nLD I, sprite_r\nDRW V0, V1, 5\n\nsprite_s:\n    INCBIN "
-                 "\"../tests/inputs/sprites/s.bin\" ; Quotes are ignored\n\nsprite_r:\nDB    0xE0, 0x90, 0xE0, 0x90, 0x90"};
+                 "\"../../../tests/inputs/sprites/s.bin\" ; Quotes are ignored\n\nsprite_r:\nDB    0xE0, 0x90, 0xE0, 0x90, 0x90"};
 
     const auto tokens = l.produceTokens();
     REQUIRE(tokens.size() == 62);

@@ -108,7 +108,7 @@ TEST_CASE("INCBIN", "[directives]")
 {
     ass::filename = "<test>";
 
-    ass::Lexer l{"INCBIN ../tests/inputs/sprites/s.bin"};
+    ass::Lexer l{"INCBIN ../../../tests/inputs/sprites/s.bin"};
     const auto tokens = l.produceTokens();
 
     ass::Parser p{};
