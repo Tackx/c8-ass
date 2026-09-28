@@ -14,6 +14,12 @@ set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 # Creates the BUILD_TESTING option (default ON)
 include(CTest)
 
+# Link the GCC runtime (libstdc++, libgcc, winpthread) statically on MinGW,
+# so the executables do not need the MSYS2 DLLs
+if(MINGW)
+    add_link_options(-static)
+endif()
+
 # Warnings
 add_library(ass_warnings INTERFACE)
 
@@ -40,13 +46,21 @@ add_library(ass_core STATIC
 target_include_directories(ass_core PUBLIC src)
 target_link_libraries(ass_core PRIVATE ass_warnings)
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+# libstdc++ keeps parts of <print> in a separate library (GCC, and Clang when it uses libstdc++)
+include(CheckCXXSymbolExists)
+check_cxx_symbol_exists(__GLIBCXX__ "version" ASS_USES_LIBSTDCXX)
+
+if(ASS_USES_LIBSTDCXX)
     target_link_libraries(ass_core PRIVATE stdc++exp)
 endif()
 
 # Executable
 add_executable(ass src/main.cpp)
 target_link_libraries(ass PRIVATE ass_core ass_warnings)
+
+# Same output path for all generators: the $<0:> genex stops multi-config
+# generators (Visual Studio) from adding a per-configuration subfolder
+set_target_properties(ass PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<0:>")
 
 # Tests
 if(BUILD_TESTING)

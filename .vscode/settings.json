@@ -1,10 +1,6 @@
 {
     "C_Cpp.intelliSenseEngine": "disabled",
-    "cmake.buildDirectory": "${workspaceFolder}/build/debug",
-        "cmake.generator": "Ninja",
-    "cmake.configureSettings": {
-        "CMAKE_CXX_COMPILER": "C:/msys64/mingw64/bin/g++.exe"
-    },
+    "cmake.useCMakePresets": "always",
     "debug.onTaskErrors": "debugAnyway",
-    "clangd.arguments": ["--query-driver=C:/msys64/mingw64/bin/g++.exe"]
+    "clangd.arguments": ["--query-driver=**/g++*.exe"]
 }

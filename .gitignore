@@ -415,3 +415,5 @@ build/
 compile_commands.json
 *_log.txt
 ROMS/
+# Per-user CMake presets
+CMakeUserPresets.json

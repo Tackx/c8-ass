@@ -20,5 +20,8 @@ add_executable(tests
 
 target_link_libraries(tests PRIVATE ass_core ass_warnings Catch2::Catch2WithMain)
 
+# Absolute path, so the tests do not depend on the working directory
+target_compile_definitions(tests PRIVATE TEST_INPUTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/inputs")
+
 # Find test names when ctest runs, not after each build
 catch_discover_tests(tests DISCOVERY_MODE PRE_TEST)

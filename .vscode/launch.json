@@ -2,16 +2,16 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "program": "${workspaceRoot}/build/ass.exe",
-            "name": "Debug",
+            "name": "ass: test.ass (GCC/Clang, gdb)",
             "type": "cppdbg",
             "request": "launch",
-            "args": ["./test.asm"],
-            "stopAtEntry": false,
+            "program": "${command:cmake.buildDirectory}/ass.exe",
+            "args": ["-o", "output.ch8", "test.ass"],
             "cwd": "${workspaceFolder}",
-            "environment": [],
+            "stopAtEntry": false,
             "externalConsole": false,
             "MIMode": "gdb",
+            "miDebuggerPath": "gdb.exe",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
@@ -19,19 +19,17 @@
                     "ignoreFailures": false
                 }
             ],
-            "windows": {
-                "program": "${workspaceFolder}/build/ass.exe",
-                "miDebuggerPath": "gdb.exe",
-                "args": ["-o", "output.ch8", "test.ass"]
-            },
-            "osx": {
-                "program": "${workspaceFolder}/build/ass",
-                "MIMode": "lldb"
-            },
-            "linux": {
-                "program": "${workspaceFolder}/build/ass",
-                "miDebuggerPath": "/usr/bin/gdb"
-            },
+            "preLaunchTask": "CMake: build"
+        },
+        {
+            "name": "ass: test.ass (MSVC)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${command:cmake.buildDirectory}/ass.exe",
+            "args": ["-o", "output.ch8", "test.ass"],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "integratedTerminal",
             "preLaunchTask": "CMake: build"
         }
     ]

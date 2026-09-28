@@ -1,16 +1,16 @@
 build:
-	cmake -B build/debug -G Ninja -DCMAKE_CXX_COMPILER=C:/msys64/mingw64/bin/g++.exe -DCMAKE_BUILD_TYPE=Debug && cmake --build build/debug --parallel
+	cmake --preset gcc-debug && cmake --build --preset gcc-debug
 
-test: build
-	ctest --test-dir build/debug --output-on-failure
+test:
+	cmake --workflow --preset gcc-debug
 
 run: build
-	./build/debug/ass.exe test.ass
+	./build/gcc-debug/ass.exe test.ass
 
 build-release:
-	cmake -B build/release -G Ninja -DCMAKE_CXX_COMPILER=C:/msys64/mingw64/bin/g++.exe -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF && cmake --build build/release --parallel
+	cmake --workflow --preset gcc-release
 
 run-release: build-release
-	./build/release/ass.exe test.ass
+	./build/gcc-release/ass.exe test.ass
 
-.PHONY: build test run
+.PHONY: build test run build-release run-release
