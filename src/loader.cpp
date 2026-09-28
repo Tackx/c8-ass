@@ -90,4 +90,5 @@ void ensureFilepathExists(std::string& filepath)
         filepath = "./" + filepath;
     }
 }
+
 } // namespace ass

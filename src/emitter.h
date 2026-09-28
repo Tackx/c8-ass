@@ -9,6 +9,7 @@
 
 namespace ass
 {
+
 class Emitter
 {
   public:
@@ -19,4 +20,5 @@ class Emitter
   private:
     std::ofstream m_fo;
 };
+
 } // namespace ass

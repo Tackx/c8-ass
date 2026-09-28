@@ -20,4 +20,5 @@ class Timer
 };
 
 bool equalsIgnoreCase(std::string_view s1, std::string_view s2);
+
 } // namespace ass

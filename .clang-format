@@ -12,6 +12,7 @@ AllowShortCaseLabelsOnASingleLine: false
 AllowShortEnumsOnASingleLine: false
 AlignAfterOpenBracket: BlockIndent
 ContinuationIndentWidth: 4
+WrapNamespaceBodyWithEmptyLines: Always
 
 KeepEmptyLines:
   AtStartOfBlock: false

@@ -705,4 +705,5 @@ Instruction Parser::parseInstruction(const Token& mnem, const std::vector<Token>
 
     return makeInstruction(*match, args);
 }
+
 } // namespace ass
