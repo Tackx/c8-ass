@@ -65,8 +65,6 @@ int assemble(int argc, char** argv)
 
         Logger::Info("ROM assembled successfully: {}", outPath);
 
-        Logger::Debug("YOOO IT'S DEBUG FROM THE CLASS!!!!! {}", "aaaaaa");
-
         return 0;
     }
     catch (const NoInputException& e)
