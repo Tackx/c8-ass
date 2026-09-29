@@ -13,8 +13,6 @@ Developed live at:
 
 - [ ] Fix relative paths in tests
   - [ ] Lexer should parse quoted text as one token (no matter its contents)
-- [ ] Add colored output
-  - [ ] Only use it if stdout is not a file
 - [ ] Fix up/refactor the Timer class
 - [ ] Make paths for the `INCBIN` directive relative to the source file?
 - [ ] Max ROM size limit?

@@ -1,10 +1,11 @@
 #include <algorithm>
 #include <cctype>
 #include <chrono>
-#include <print>
 #include <string_view>
 
+#include "logger.h"
 #include "util.h"
+
 
 namespace ass
 {
@@ -21,7 +22,7 @@ Timer::~Timer()
     auto now = std::chrono::system_clock::now();
     auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_start);
 
-    std::println("Finished in {}", diff);
+    Logger::Info("Finished in {}", diff);
 };
 
 bool equalsIgnoreCase(std::string_view s1, std::string_view s2)

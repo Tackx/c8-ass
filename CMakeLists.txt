@@ -40,7 +40,6 @@ add_library(ass_core STATIC
     src/lexer.cpp
     src/loader.cpp
     src/flags.cpp
-    src/logger.cpp
 )
 
 target_include_directories(ass_core PUBLIC src)

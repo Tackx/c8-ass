@@ -1,6 +1,5 @@
 #include <exception>
 #include <format>
-#include <print>
 #include <string>
 #include <unordered_map>
 
@@ -62,7 +61,7 @@ int assemble(int argc, char** argv)
 
         emitter.emit(parsedInstructions);
 
-        std::println("ROM assembled successfully: {}", outPath);
+        Logger::Info("ROM assembled successfully: {}", outPath);
 
         Logger::Debug("YOOO IT'S DEBUG FROM THE CLASS!!!!! {}", "aaaaaa");
 
@@ -70,14 +69,14 @@ int assemble(int argc, char** argv)
     }
     catch (const NoInputException& e)
     {
-        std::println("Exception caught: {}\n", e.what());
-        std::println("{}", USAGE_MSG);
+        Logger::Err("Exception caught: {}\n", e.what());
+        Logger::Info("{}", USAGE_MSG);
 
         return 1;
     }
     catch (const std::exception& e)
     {
-        std::println("Exception caught: {}", e.what());
+        Logger::Err("Exception caught: {}", e.what());
 
         return 1;
     }
