@@ -139,6 +139,7 @@ TEST_CASE("No args provided", "[E2E]")
 TEST_CASE("Instructions + Directives", "[E2E]")
 {
     ass::filename = "<test>";
+    ass::inputPathAbsolute = std::filesystem::path{__FILE__}.remove_filename();
 
     ass::Lexer l{"LD V0, 17\nLD V1, 4\nLD I, sprite_s\nDRW V0, V1, 5\n\nLD V0, 22\nLD I, sprite_r\nDRW V0, V1, 5\n\nsprite_s:\n    INCBIN "
                  "\"inputs/sprites/s.bin\" ; Quotes are ignored\n\nsprite_r:\nDB    0xE0, 0x90, 0xE0, 0x90, 0x90"};
