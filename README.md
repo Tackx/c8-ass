@@ -11,10 +11,6 @@ Developed live at:
 
 ## TODO
 
-- [x] Fix relative paths in tests
-  - [x] Lexer should parse quoted text as one token (no matter its contents)
-- [ ] Fix up/refactor the Timer class
-- [x] Make paths for the `INCBIN` directive relative to the source file?
 - [ ] Max ROM size limit?
 - [ ] Clean up the output file if there was an exception thrown during the process
   - [ ] Could be release build only?
