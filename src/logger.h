@@ -18,6 +18,7 @@ namespace ass
 class Logger
 {
     inline static bool isTerminal = isatty(fileno(stdout));
+    inline static auto magenta = isTerminal ? "\033[35;1m" : "";
     inline static auto yellow = isTerminal ? "\033[33;1m" : "";
     inline static auto red = isTerminal ? "\033[31;1m" : "";
     inline static auto reset = isTerminal ? "\033[0m" : "";
@@ -28,7 +29,7 @@ class Logger
 #ifndef NDEBUG
     template <typename... Args> static void Debug(std::format_string<Args...> format, Args&&... args)
     {
-        std::println("[ DBG ]: {}", std::format(format, std::forward<Args>(args)...));
+        std::println("{}[ DBG ]:{} {}", magenta, reset, std::format(format, std::forward<Args>(args)...));
     }
 #else
     template <typename... Args> static void Debug(std::format_string<Args...> format, Args&&...)
