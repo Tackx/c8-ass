@@ -6,4 +6,4 @@ LD I, sprite_s
 DRW V0, V1, 5
 
 sprite_s:
-    INCBIN "tests/inputs/sprites/s.bin" ; Quotes are ignored  
+    INCBIN "../tests/inputs/sprites/s.bin" ; Quotes are ignored  
