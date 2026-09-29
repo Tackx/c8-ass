@@ -55,10 +55,27 @@ std::vector<Token> Lexer::produceTokens()
         }
         else if (m_text[m_cursor] == '"')
         {
+            t.type = TokenType::Identifier;
             m_cursor++;
             m_col++;
 
-            continue;
+            auto start = m_cursor;
+
+            while (m_cursor < m_text.length() && m_text[m_cursor] != '\n' && m_text[m_cursor] != '"')
+            {
+                m_cursor++; // Move the cursor
+                m_col++;
+            }
+
+            if (m_text[m_cursor] != '"')
+            {
+                throw std::runtime_error(std::format("{}:{}:{}: Expected closing quote", ass::filename, m_line, m_col));
+            }
+
+            t.text = m_text.substr(start, m_cursor - start);
+
+            m_cursor++;
+            m_col++;
         }
         else if (isWhitespace(m_text[m_cursor]))
         {

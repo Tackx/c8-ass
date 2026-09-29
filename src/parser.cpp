@@ -106,13 +106,22 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
                 }
 
                 const auto& filepathToken = tokens[i + 1];
-                const auto& inputPath = std::string{filepathToken.text};
+
+                auto inputPath = std::filesystem::path{filepathToken.text};
+
+                // TODO: Move this to fs helpers?
+                if (!inputPath.is_absolute())
+                {
+                    inputPath = ass::inputPathAbsolute / inputPath;
+                }
 
                 auto exists = std::filesystem::exists(inputPath);
                 if (!exists)
                 {
                     throw std::runtime_error(
-                        std::format("{}:{}:{}: The provided filepath does not exist: {}", ass::filename, filepathToken.line, filepathToken.col, inputPath)
+                        std::format(
+                            "{}:{}:{}: The provided filepath does not exist: {}", ass::filename, filepathToken.line, filepathToken.col, inputPath.string()
+                        )
                     );
                 }
 
@@ -121,8 +130,8 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
                 {
                     throw std::runtime_error(
                         std::format(
-                            "{}:{}:{}: The provided file {} is too large (> 15 bytes): {}", ass::filename, filepathToken.line, filepathToken.col, inputPath,
-                            size
+                            "{}:{}:{}: The provided file {} is too large (> 15 bytes): {}", ass::filename, filepathToken.line, filepathToken.col,
+                            inputPath.string(), size
                         )
                     );
                 }
@@ -220,7 +229,7 @@ Directive Parser::parseDirective(const Token& token, const std::vector<Token>& r
             );
         }
 
-        auto inputPath = std::string{rawValues[0].text};
+        auto inputPath = std::filesystem::path{rawValues[0].text};
         auto parsedValues = loadFileContentBytes(inputPath);
 
         Directive directive{

@@ -29,8 +29,6 @@ class Logger
     template <typename... Args> static void Debug(std::format_string<Args...> format, Args&&... args)
     {
         std::println("[ DBG ]: {}", std::format(format, std::forward<Args>(args)...));
-
-        std::println("isFile: {}", isTerminal);
     }
 #else
     template <typename... Args> static void Debug(std::format_string<Args...> format, Args&&...)

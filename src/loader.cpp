@@ -1,4 +1,5 @@
 
+#include <cerrno>
 #include <cstdint>
 #include <cstdio>
 #include <filesystem>
@@ -11,6 +12,7 @@
 #include <stdexcept>
 #include <stdio.h>
 #include <string>
+#include <system_error>
 #include <vector>
 
 #ifdef _WIN32
@@ -27,19 +29,20 @@
 namespace ass
 {
 
-std::string loadFileContentString(const std::string& inputPath)
+std::string loadFileContentString(const std::filesystem::path& inputPath)
 {
     std::stringstream buffer;
     bool isFileInput = !isatty(fileno(stdin));
 
     if (inputPath != "")
     {
-        ass::filename = inputPath.substr(inputPath.find_last_of("/\\") + 1);
+        ass::filename = inputPath.filename().string();
+        ass::inputPathAbsolute = std::filesystem::absolute(inputPath).remove_filename();
 
         std::ifstream t(inputPath, std::ios::binary);
         if (!t)
         {
-            throw std::runtime_error("Failed to open file");
+            throw std::system_error(errno, std::system_category(), std::format("Failed to open file {}", ass::filename));
         }
 
         buffer << t.rdbuf();
@@ -59,15 +62,22 @@ std::string loadFileContentString(const std::string& inputPath)
     throw NoInputException("No input specified");
 }
 
-std::vector<uint8_t> loadFileContentBytes(const std::string& inputPath)
+std::vector<uint8_t> loadFileContentBytes(const std::filesystem::path& inputPath)
 {
-    auto fileExists = std::filesystem::exists(inputPath);
-    if (!fileExists)
+    auto path = inputPath;
+
+    if (!inputPath.is_absolute())
     {
-        throw std::runtime_error(std::format("The provided filepath does not exist"));
+        path = ass::inputPathAbsolute / inputPath;
     }
 
-    std::ifstream inputStream{inputPath, std::ios_base::binary};
+    auto fileExists = std::filesystem::exists(path);
+    if (!fileExists)
+    {
+        throw std::runtime_error(std::format("The provided filepath does not exist: {}", path.string()));
+    }
+
+    std::ifstream inputStream{path, std::ios_base::binary};
 
     std::vector<uint8_t> bytes{(std::istreambuf_iterator<char>{inputStream}), (std::istreambuf_iterator<char>{})};
 

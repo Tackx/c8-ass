@@ -1,4 +1,5 @@
 #include <exception>
+#include <filesystem>
 #include <format>
 #include <string>
 #include <unordered_map>
@@ -40,7 +41,8 @@ int assemble(int argc, char** argv)
 
         auto [flags, inPath] = getFlags(argc, argv);
 
-        auto fileContent = loadFileContentString(inPath);
+        std::filesystem::path inputPath{inPath};
+        auto fileContent = loadFileContentString(inputPath);
 
         Lexer lexer{fileContent};
         Parser parser{};

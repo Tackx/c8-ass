@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cstdint>
+#include <filesystem>
 #include <variant>
 #include <vector>
 
@@ -107,8 +108,9 @@ TEST_CASE(".byte", "[directives]")
 TEST_CASE("INCBIN", "[directives]")
 {
     ass::filename = "<test>";
+    ass::inputPathAbsolute = std::filesystem::path{__FILE__}.remove_filename();
 
-    ass::Lexer l{"INCBIN ../../../tests/inputs/sprites/s.bin"};
+    ass::Lexer l{"INCBIN inputs/sprites/s.bin"};
     const auto tokens = l.produceTokens();
 
     ass::Parser p{};
