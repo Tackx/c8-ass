@@ -11,7 +11,7 @@ class Timer
   private:
     Timer();
 
-    std::chrono::time_point<std::chrono::system_clock> m_start;
+    const std::chrono::time_point<std::chrono::steady_clock> m_start;
 
   public:
     static Timer Start();
