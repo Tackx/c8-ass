@@ -1,0 +1,44 @@
+init:
+    LD I, sprite_cube
+
+    RND V0, 0x3B
+    RND V1, 0x1B   
+    
+    ; LD V0, 32 ; x start
+    ; LD V1, 16 ; y start
+
+    LD V2, 1 ; x velocity
+    LD V3, 1 ; y velocity
+    
+loop:
+    CLS
+    DRW V0, V1, 4
+    LD V4, 4
+    LD DT, V4
+
+wait:
+    LD V4, DT
+    SE V4, 0
+    JP wait
+
+    ADD V0, V2
+
+    ; If V0 is 60 (64 - 4), set V2 to 255
+    SNE V0, 60
+    LD V2, 255
+
+    SNE V0, 0
+    LD V2, 1
+
+    ADD V1, V3
+
+    SNE V1, 28
+    LD V3, 255
+
+    SNE V1, 0
+    LD V3, 1
+
+    JP loop
+
+sprite_cube:
+    DB 0xF0, 0xF0, 0xF0, 0xF0
