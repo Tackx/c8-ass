@@ -1,4 +1,5 @@
 
+#include <format>
 #include <fstream>
 #include <ios>
 #include <stdexcept>
@@ -16,7 +17,7 @@ Emitter::Emitter(const std::string& outPath) : m_fo{outPath, std::ios_base::bina
 {
     if (!m_fo.is_open())
     {
-        throw std::runtime_error("Cannot open output file");
+        throw std::runtime_error(std::format("Cannot open output file: {}", outPath));
     }
 }
 
