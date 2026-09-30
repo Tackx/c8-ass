@@ -29,10 +29,14 @@
 namespace ass
 {
 
+bool isFileInput()
+{
+    return !isatty(fileno(stdin));
+}
+
 std::string loadFileContentString(const std::filesystem::path& inputPath)
 {
     std::stringstream buffer;
-    bool isFileInput = !isatty(fileno(stdin));
 
     if (inputPath != "")
     {
@@ -50,9 +54,11 @@ std::string loadFileContentString(const std::filesystem::path& inputPath)
         return buffer.str();
     }
 
-    if (isFileInput)
+    if (isFileInput())
     {
         ass::filename = "[STDIN]";
+        ass::inputPathAbsolute = std::filesystem::current_path();
+
         // Try to load input from stdin
         buffer << std::cin.rdbuf();
 

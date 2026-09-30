@@ -9,9 +9,9 @@ namespace ass
 class Timer
 {
   private:
-    Timer();
+    Timer() = default;
 
-    const std::chrono::time_point<std::chrono::steady_clock> m_start;
+    const std::chrono::time_point<std::chrono::steady_clock> m_start = std::chrono::steady_clock::now();
 
   public:
     static Timer Start();

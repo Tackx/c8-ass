@@ -10,10 +10,6 @@
 namespace ass
 {
 
-Timer::Timer() : m_start{std::chrono::steady_clock::now()}
-{
-}
-
 Timer Timer::Start()
 {
     return Timer{};

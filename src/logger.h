@@ -3,21 +3,15 @@
 #include <format>
 #include <print>
 
-#ifdef _WIN32
-#include <io.h>
-#include <stdio.h>
-#define isatty _isatty
-#define fileno _fileno
-#else
-#include <unistd.h>
-#endif
+#include "loader.h"
 
 namespace ass
 {
 
 class Logger
 {
-    inline static bool isTerminal = isatty(fileno(stdout));
+    inline static bool isTerminal = !isFileInput();
+
     inline static auto magenta = isTerminal ? "\033[35;1m" : "";
     inline static auto yellow = isTerminal ? "\033[33;1m" : "";
     inline static auto red = isTerminal ? "\033[31;1m" : "";
