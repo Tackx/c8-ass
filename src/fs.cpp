@@ -92,20 +92,13 @@ std::vector<uint8_t> loadFileContentBytes(const std::filesystem::path& inputPath
     return bytes;
 }
 
-// TODO: Change input to std::filesystem::path
-// This implicitly modifies filepath - rename or solve differently?
-void ensureFilepathExists(std::string& filepath)
+void ensureFilepathExists(std::filesystem::path filePath)
 {
-    auto path = std::filesystem::path{filepath};
-    path.remove_filename();
+    filePath.remove_filename();
 
-    if (path.string().size() > 0)
+    if (filePath.string().size() > 0)
     {
-        std::filesystem::create_directories(path);
-    }
-    else
-    {
-        filepath = "./" + filepath;
+        std::filesystem::create_directories(filePath);
     }
 }
 

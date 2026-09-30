@@ -13,7 +13,6 @@
 #include "parser.h"
 #include "util.h"
 
-
 namespace ass
 {
 
@@ -42,8 +41,7 @@ int assemble(int argc, char** argv)
 
         auto [flags, inPath] = getFlags(argc, argv);
 
-        std::filesystem::path inputPath{inPath};
-        auto fileContent = loadFileContentString(inputPath);
+        auto fileContent = loadFileContentString(inPath);
 
         Lexer lexer{fileContent};
         Parser parser{};
