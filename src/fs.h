@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <stdexcept>
@@ -24,5 +25,7 @@ bool isFileInput();
 std::string loadFileContentString(const std::filesystem::path& inputPath);
 std::vector<uint8_t> loadFileContentBytes(const std::filesystem::path& inputPath);
 void ensureFilepathExists(std::string& filepath);
+void validateIncbinFile(const std::filesystem::path& inputPath);
+size_t getFileSize(const std::filesystem::path& inputPath);
 
 } // namespace ass

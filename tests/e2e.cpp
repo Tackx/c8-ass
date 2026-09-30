@@ -10,10 +10,11 @@
 #include <vector>
 
 #include "ass.h"
+#include "fs.h"
 #include "instruction.h"
 #include "lexer.h"
-#include "loader.h"
 #include "parser.h"
+
 
 #ifdef _WIN32
 #include <fcntl.h>

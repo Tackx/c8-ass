@@ -7,11 +7,12 @@
 #include "ass.h"
 #include "emitter.h"
 #include "flags.h"
+#include "fs.h"
 #include "lexer.h"
-#include "loader.h"
 #include "logger.h"
 #include "parser.h"
 #include "util.h"
+
 
 namespace ass
 {

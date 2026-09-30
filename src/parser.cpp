@@ -3,6 +3,7 @@
 #include <charconv>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <filesystem>
 #include <format>
 #include <ranges>
@@ -15,11 +16,12 @@
 #include <variant>
 #include <vector>
 
+#include "fs.h"
 #include "instruction.h"
 #include "lexer.h"
-#include "loader.h"
 #include "parser.h"
 #include "util.h"
+
 
 namespace ass
 {
@@ -106,37 +108,18 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
                 }
 
                 const auto& filepathToken = tokens[i + 1];
-
                 auto inputPath = std::filesystem::path{filepathToken.text};
 
-                // TODO: Move this to fs helpers?
-                if (!inputPath.is_absolute())
+                try
                 {
-                    inputPath = ass::inputPathAbsolute / inputPath;
+                    validateIncbinFile(inputPath);
+                }
+                catch (const std::exception& e)
+                {
+                    throw std::runtime_error(std::format("{}:{}:{}: {}", ass::filename, filepathToken.line, filepathToken.col, e.what()));
                 }
 
-                auto exists = std::filesystem::exists(inputPath);
-                if (!exists)
-                {
-                    throw std::runtime_error(
-                        std::format(
-                            "{}:{}:{}: The provided filepath does not exist: {}", ass::filename, filepathToken.line, filepathToken.col, inputPath.string()
-                        )
-                    );
-                }
-
-                auto size = std::filesystem::file_size(inputPath);
-                if (size > 15)
-                {
-                    throw std::runtime_error(
-                        std::format(
-                            "{}:{}:{}: The provided file {} is too large (> 15 bytes): {}", ass::filename, filepathToken.line, filepathToken.col,
-                            inputPath.string(), size
-                        )
-                    );
-                }
-
-                memPointer += static_cast<uint8_t>(size);
+                memPointer += static_cast<uint8_t>(getFileSize(inputPath));
 
                 i++; // Skip the next token as we already handled the input filepath
 

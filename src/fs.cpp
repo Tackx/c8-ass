@@ -24,7 +24,7 @@
 #include <unistd.h>
 #endif
 
-#include "loader.h"
+#include "fs.h"
 
 namespace ass
 {
@@ -92,6 +92,8 @@ std::vector<uint8_t> loadFileContentBytes(const std::filesystem::path& inputPath
     return bytes;
 }
 
+// TODO: Change input to std::filesystem::path
+// This implicitly modifies filepath - rename or solve differently?
 void ensureFilepathExists(std::string& filepath)
 {
     auto path = std::filesystem::path{filepath};
@@ -104,6 +106,42 @@ void ensureFilepathExists(std::string& filepath)
     else
     {
         filepath = "./" + filepath;
+    }
+}
+
+std::filesystem::path getAbsoluteFilepath(const std::filesystem::path& inputPath)
+{
+    auto out = inputPath;
+
+    if (!out.is_absolute())
+    {
+        out = ass::inputPathAbsolute / inputPath;
+    }
+
+    return out;
+}
+
+size_t getFileSize(const std::filesystem::path& inputPath)
+{
+    auto path = getAbsoluteFilepath(inputPath);
+
+    return std::filesystem::file_size(path);
+}
+
+void validateIncbinFile(const std::filesystem::path& inputPath)
+{
+    auto path = getAbsoluteFilepath(inputPath);
+
+    auto exists = std::filesystem::exists(path);
+    if (!exists)
+    {
+        throw std::runtime_error(std::format("The provided filepath does not exist: {}", path.string()));
+    }
+
+    auto size = getFileSize(path);
+    if (size > 15)
+    {
+        throw std::runtime_error(std::format("The provided file {} is too large (> 15 bytes): {}", path.string(), size));
     }
 }
 

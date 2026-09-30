@@ -38,7 +38,7 @@ add_library(ass_core STATIC
     src/parser.cpp
     src/util.cpp
     src/lexer.cpp
-    src/loader.cpp
+    src/fs.cpp
     src/flags.cpp
 )
 

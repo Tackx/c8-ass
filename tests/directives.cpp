@@ -4,10 +4,11 @@
 #include <variant>
 #include <vector>
 
+#include "fs.h"
 #include "instruction.h"
 #include "lexer.h"
-#include "loader.h"
 #include "parser.h"
+
 
 TEST_CASE("DB", "[directives]")
 {

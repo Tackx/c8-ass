@@ -1,10 +1,11 @@
 #include <catch2/catch_test_macros.hpp>
 #include <variant>
 
+#include "fs.h"
 #include "instruction.h"
 #include "lexer.h"
-#include "loader.h"
 #include "parser.h"
+
 
 TEST_CASE("CLS", "[instructions]")
 {
