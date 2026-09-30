@@ -2,10 +2,13 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <filesystem>
 #include <iterator>
+#include <print>
 #include <ranges>
 #include <stdexcept>
+#include <string>
 #include <variant>
 #include <vector>
 
@@ -14,7 +17,6 @@
 #include "instruction.h"
 #include "lexer.h"
 #include "parser.h"
-
 
 #ifdef _WIN32
 #include <fcntl.h>
@@ -34,12 +36,12 @@
 
 constexpr int STDIN_FD = 0;
 
-auto inputPath = (std::filesystem::path{__FILE__}.remove_filename() / "inputs/input.ass").string();
+auto happyInputPath = (std::filesystem::path{__FILE__}.remove_filename() / "inputs/input.ass").string();
 
 // ./ass -o output.ch8 <path>/tests/inputs/input.ass
 TEST_CASE("Happy day: Output flag + filepath arg provided", "[E2E]")
 {
-    char* argv[] = {(char*)"ass", (char*)"-o", (char*)"output.ch8", (char*)inputPath.data()};
+    char* argv[] = {(char*)"ass", (char*)"-o", (char*)"output.ch8", (char*)happyInputPath.data()};
 
     auto output = ass::assemble(std::size(argv), argv);
 
@@ -49,7 +51,7 @@ TEST_CASE("Happy day: Output flag + filepath arg provided", "[E2E]")
 // ./ass <path>/tests/inputs/input.ass
 TEST_CASE("Happy day: Only filepath arg provided", "[E2E]")
 {
-    char* argv[] = {(char*)"ass", (char*)inputPath.data()};
+    char* argv[] = {(char*)"ass", (char*)happyInputPath.data()};
 
     auto output = ass::assemble(std::size(argv), argv);
 
@@ -61,7 +63,7 @@ TEST_CASE("Happy day: Reading from a redirected stdin", "[E2E]")
 {
     auto old_stdin = PORT_DUP(STDIN_FD);
 
-    auto fd = PORT_OPEN(inputPath.data());
+    auto fd = PORT_OPEN(happyInputPath.data());
     REQUIRE(fd != -1);
 
     PORT_DUP2(fd, STDIN_FD);
@@ -82,7 +84,7 @@ TEST_CASE("Happy day: Reading from a redirected stdin with an output flag used",
 {
     auto old_stdin = PORT_DUP(STDIN_FD);
 
-    auto fd = PORT_OPEN(inputPath.data());
+    auto fd = PORT_OPEN(happyInputPath.data());
     REQUIRE(fd != -1);
 
     PORT_DUP2(fd, STDIN_FD);
@@ -101,7 +103,7 @@ TEST_CASE("Happy day: Reading from a redirected stdin with an output flag used",
 // ./ass -o <path>/tests/inputs/input.ass
 TEST_CASE("Open output flag, only one follow-up argument. The input path cannot be determined.", "[E2E]")
 {
-    char* argv[] = {(char*)"ass", (char*)"-o", (char*)inputPath.data()};
+    char* argv[] = {(char*)"ass", (char*)"-o", (char*)happyInputPath.data()};
 
     auto output = ass::assemble(std::size(argv), argv);
 
@@ -113,7 +115,7 @@ TEST_CASE("Open outplug flag, redirected stdin", "[E2E]")
 {
     auto old_stdin = PORT_DUP(STDIN_FD);
 
-    auto fd = PORT_OPEN(inputPath.data());
+    auto fd = PORT_OPEN(happyInputPath.data());
     REQUIRE(fd != -1);
 
     PORT_DUP2(fd, STDIN_FD);
@@ -187,4 +189,33 @@ TEST_CASE("Instructions + Directives", "[E2E]")
             throw std::runtime_error("Unsupported type in the list of expected values");
         }
     }
+}
+
+TEST_CASE("Resulting ROM too large (> 4096 bytes)", "[E2E]")
+{
+    auto inputPath = (std::filesystem::path{__FILE__}.remove_filename() / "inputs/input_too_large.ass").string();
+
+    std::string expected{"input_too_large.ass:221:19904: Error while incrementing memory pointer: Maximum ROM size reached"};
+    std::string actual{};
+
+    try
+    {
+        auto fileContent = ass::loadFileContentString(inputPath);
+
+        ass::Lexer lexer{fileContent};
+        ass::Parser parser{};
+
+        auto tokens = lexer.produceTokens();
+
+        parser.parseLabels(tokens);
+    }
+    catch (const std::exception& e)
+    {
+        actual = e.what();
+    }
+
+    std::println("Expected: {}", expected);
+    std::println("Actual: {}", actual);
+
+    REQUIRE(expected.compare(actual) == 0);
 }

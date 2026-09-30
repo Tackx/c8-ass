@@ -50,6 +50,8 @@ class Parser
     std::unordered_map<std::string, Label> m_labelMemoryMap;
 
     Instruction parseInstruction(const Token& mnem, const std::vector<Token>& args);
+
+    void incrementMemPointer(uint16_t& memPointer, uint8_t increment);
 };
 
 } // namespace ass

@@ -42,6 +42,18 @@ bool Parser::isDirective(const Token& mnem)
     return false;
 }
 
+void Parser::incrementMemPointer(uint16_t& memPointer, uint8_t increment)
+{
+    uint16_t incremented = memPointer + increment;
+
+    if (incremented > 0xFFF)
+    {
+        throw std::runtime_error("Maximum ROM size reached");
+    }
+
+    memPointer += increment;
+}
+
 void Parser::parseLabels(const std::vector<Token>& tokens)
 {
     uint16_t memPointer{0x200};
@@ -88,7 +100,16 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
                 {
                     if (tokens[i].type == TokenType::Number)
                     {
-                        memPointer++;
+                        try
+                        {
+                            incrementMemPointer(memPointer, 1);
+                        }
+                        catch (const std::exception& e)
+                        {
+                            throw std::runtime_error(
+                                std::format("{}:{}:{}: Error while incrementing memory pointer: {}", ass::filename, tokens[i].line, tokens[i].col, e.what())
+                            );
+                        }
                     }
 
                     i++;
@@ -117,7 +138,16 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
                     throw std::runtime_error(std::format("{}:{}:{}: {}", ass::filename, filepathToken.line, filepathToken.col, e.what()));
                 }
 
-                memPointer += static_cast<uint8_t>(getFileSize(filepathToken.text));
+                try
+                {
+                    incrementMemPointer(memPointer, static_cast<uint8_t>(getFileSize(filepathToken.text)));
+                }
+                catch (const std::exception& e)
+                {
+                    throw std::runtime_error(
+                        std::format("{}:{}:{}: Error while incrementing memory pointer: {}", ass::filename, tokens[i].line, tokens[i].col, e.what())
+                    );
+                }
 
                 i++; // Skip the next token as we already handled the input filepath
 
@@ -154,7 +184,16 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
         // If the previous token is not a newline and this one is, increment the pointer
         if (i > 0 && tokens[i - 1].type != TokenType::Newline && token.type == TokenType::Newline)
         {
-            memPointer += 2;
+            try
+            {
+                incrementMemPointer(memPointer, 2);
+            }
+            catch (const std::exception& e)
+            {
+                throw std::runtime_error(
+                    std::format("{}:{}:{}: Error while incrementing memory pointer: {}", ass::filename, tokens[i].line, tokens[i].col, e.what())
+                );
+            }
         }
     }
 }
