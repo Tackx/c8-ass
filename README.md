@@ -11,8 +11,6 @@ Developed live at:
 
 ## TODO
 
-- [ ] Check actual bytes in E2E test output
-- [ ] Max ROM size limit?
 - [ ] Clean up the output file if there was an exception thrown during the process
   - [ ] Could be release build only?
 - [ ] Add "squiggles" + caret to error messages?
