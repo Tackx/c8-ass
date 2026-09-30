@@ -22,7 +22,6 @@
 #include "parser.h"
 #include "util.h"
 
-
 namespace ass
 {
 
@@ -108,18 +107,17 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
                 }
 
                 const auto& filepathToken = tokens[i + 1];
-                auto inputPath = std::filesystem::path{filepathToken.text};
 
                 try
                 {
-                    validateIncbinFile(inputPath);
+                    validateIncbinFile(filepathToken.text);
                 }
                 catch (const std::exception& e)
                 {
                     throw std::runtime_error(std::format("{}:{}:{}: {}", ass::filename, filepathToken.line, filepathToken.col, e.what()));
                 }
 
-                memPointer += static_cast<uint8_t>(getFileSize(inputPath));
+                memPointer += static_cast<uint8_t>(getFileSize(filepathToken.text));
 
                 i++; // Skip the next token as we already handled the input filepath
 
