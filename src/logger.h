@@ -13,6 +13,7 @@ class Logger
     inline static bool isTerminal = !isFileInput();
 
     inline static auto magenta = isTerminal ? "\033[35;1m" : "";
+    inline static auto cyan = isTerminal ? "\033[36;1m" : "";
     inline static auto yellow = isTerminal ? "\033[33;1m" : "";
     inline static auto red = isTerminal ? "\033[31;1m" : "";
     inline static auto reset = isTerminal ? "\033[0m" : "";
@@ -34,7 +35,7 @@ class Logger
 
     template <typename... Args> static void Info(std::format_string<Args...> format, Args&&... args)
     {
-        std::println("[ INFO ]: {}", std::format(format, std::forward<Args>(args)...));
+        std::println("{}[ INFO ]:{} {}", cyan, reset, std::format(format, std::forward<Args>(args)...));
     }
 
     template <typename... Args> static void Warn(std::format_string<Args...> format, Args&&... args)
