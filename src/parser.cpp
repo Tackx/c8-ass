@@ -592,7 +592,7 @@ Instruction Parser::makeInstruction(const InstructionDefinition& def, const std:
 
             case ArgType::LITERAL:
             {
-                auto literalType = def.operands[i].literalType;
+                auto literalType = def.operands[currentOperand].literalType;
 
                 if (!literalType.has_value())
                 {
