@@ -7,7 +7,6 @@
 #include "fs.h"
 #include "lexer.h"
 
-
 namespace ass
 {
 
@@ -142,7 +141,7 @@ std::vector<Token> Lexer::produceTokens()
             }
 
             while (m_cursor < m_text.length() && m_text[m_cursor] != ' ' && m_text[m_cursor] != '\n' && m_text[m_cursor] != '\r' && m_text[m_cursor] != ':' &&
-                   m_text[m_cursor] != ',' && m_text[m_cursor] != ';' && m_text[m_cursor] != ']')
+                   m_text[m_cursor] != ',' && m_text[m_cursor] != ';' && m_text[m_cursor] != ']' && m_text[m_cursor] != '\t')
             {
                 if (isHex)
                 {
