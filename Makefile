@@ -5,6 +5,8 @@ endif
 
 PRESET := gcc-$(MODE)
 
+all: build test run
+
 build:
 	cmake --preset $(PRESET) && cmake --build --preset $(PRESET)
 
@@ -14,7 +16,6 @@ run: build
 test:
 	cmake --workflow --preset gcc-debug
 
-release:
-	@:
+release: all
 
 .PHONY: build run test release
