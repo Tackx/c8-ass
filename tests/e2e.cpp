@@ -238,6 +238,7 @@ TEST_CASE("Check resulting output file bytes", "[E2E]")
 }
 
 // TODO: Use ensurePathExists() or w/e to create the output directory for test outputs
+// TODO2: Clean up outputs after every test
 TEST_CASE("Check resulting output file bytes - complex file", "[E2E]")
 {
     auto inputPath = (std::filesystem::path{__FILE__}.remove_filename() / "inputs/starting_soon.ass").string();

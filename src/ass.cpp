@@ -37,6 +37,7 @@ int assemble(int argc, char** argv)
 
     try
     {
+        // TODO: Move so it logs after errors caught below
         auto timer = Timer::Start();
 
         auto [flags, inPath] = getFlags(argc, argv);
@@ -48,6 +49,8 @@ int assemble(int argc, char** argv)
 
         auto outPath = getOutPath(flags);
         ensureFilepathExists(outPath);
+
+        Logger::Debug("Output path: {}", outPath);
 
         Emitter emitter{outPath};
 

@@ -58,6 +58,10 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
 {
     uint16_t memPointer{0x200};
 
+    auto labelCount = std::ranges::count_if(tokens, [](const Token& t) { return t.type == TokenType::Colon; });
+
+    m_labelMemoryMap.reserve(static_cast<size_t>(labelCount));
+
     for (size_t i = 0; i < tokens.size(); i++)
     {
         const auto& token = tokens[i];
@@ -65,20 +69,17 @@ void Parser::parseLabels(const std::vector<Token>& tokens)
         if (token.type == TokenType::Identifier && i + 1 < tokens.size() && tokens[i + 1].type == TokenType::Colon)
         {
             // It's a label
-            const auto& key = std::string{token.text};
 
-            const auto& foundKey = m_labelMemoryMap.find(key);
-            if (foundKey != m_labelMemoryMap.end())
+            auto [it, success] = m_labelMemoryMap.try_emplace(token.text, Label{.addr = memPointer, .line = token.line});
+            if (!success)
             {
                 throw std::runtime_error(
                     std::format(
                         "{}:{}:{}: Duplicate label. Label {} is already defined on line {}:{}", ass::filename, token.line, token.col, token.text, ass::filename,
-                        foundKey->second.line
+                        it->second.line
                     )
                 );
             }
-
-            m_labelMemoryMap[key] = Label{.addr = memPointer, .line = token.line};
 
             i++; // Skip the colon
 
@@ -310,10 +311,10 @@ std::vector<std::variant<Instruction, Directive>> Parser::parseInstructions(cons
                 parsed = parseInstruction(mnem, rawArgs);
             }
 
-            out.push_back(parsed);
+            out.push_back(std::move(parsed));
 
             mnem = {};
-            rawArgs = {};
+            rawArgs.clear();
             firstIdentifier = true;
 
             continue;

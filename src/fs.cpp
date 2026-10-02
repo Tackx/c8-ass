@@ -1,4 +1,3 @@
-
 #include <cerrno>
 #include <cstdint>
 #include <cstdio>
@@ -13,6 +12,7 @@
 #include <stdio.h>
 #include <string>
 #include <system_error>
+#include <utility>
 #include <vector>
 
 #ifdef _WIN32
@@ -36,12 +36,14 @@ bool isFileInput()
 
 std::string loadFileContentString(const std::filesystem::path& inputPath)
 {
-    std::stringstream buffer;
-
     if (inputPath != "")
     {
         ass::filename = inputPath.filename().string();
+        size_t size = std::filesystem::file_size(inputPath);
+
         ass::inputPathAbsolute = std::filesystem::absolute(inputPath).remove_filename();
+
+        std::string content(size, '\0');
 
         std::ifstream t(inputPath, std::ios::binary);
         if (!t)
@@ -49,20 +51,21 @@ std::string loadFileContentString(const std::filesystem::path& inputPath)
             throw std::system_error(errno, std::system_category(), std::format("Failed to open file {}", ass::filename));
         }
 
-        buffer << t.rdbuf();
+        t.read(&content[0], static_cast<long long>(size));
 
-        return buffer.str();
+        return content;
     }
 
     if (isFileInput())
     {
+        std::stringstream buffer;
         ass::filename = "[STDIN]";
         ass::inputPathAbsolute = std::filesystem::current_path();
 
         // Try to load input from stdin
         buffer << std::cin.rdbuf();
 
-        return buffer.str();
+        return std::move(buffer).str();
     }
 
     throw NoInputException("No input specified");
@@ -87,7 +90,8 @@ std::vector<uint8_t> loadFileContentBytes(const std::filesystem::path& inputPath
 
     std::vector<uint8_t> bytes{(std::istreambuf_iterator<char>{inputStream}), (std::istreambuf_iterator<char>{})};
 
-    inputStream.close();
+    // TODO: Probably can be removed?
+    // inputStream.close();
 
     return bytes;
 }

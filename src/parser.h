@@ -47,7 +47,7 @@ class Parser
 
     Directive parseDirective(const Token& token, const std::vector<Token>& rawValues);
 
-    std::unordered_map<std::string, Label> m_labelMemoryMap;
+    std::unordered_map<std::string_view, Label> m_labelMemoryMap;
 
     Instruction parseInstruction(const Token& mnem, const std::vector<Token>& args);
 

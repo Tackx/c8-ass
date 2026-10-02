@@ -29,7 +29,9 @@ bool Lexer::isArgSeparator(char c)
 
 std::vector<Token> Lexer::produceTokens()
 {
-    std::vector<Token> out;
+    std::vector<Token> out{};
+    // TODO: Calculate based on fileContent? Some constant prediction?
+    out.reserve(1000);
 
     while (m_cursor < m_text.length())
     {
@@ -86,11 +88,11 @@ std::vector<Token> Lexer::produceTokens()
         }
         else if (isComment(m_text[m_cursor]))
         {
-            while (m_cursor < m_text.length() && m_text[m_cursor] != '\n')
-            {
-                m_cursor++; // Move the cursor
-                m_col++;
-            }
+            auto nlPos = m_text.find('\n', m_cursor);
+            auto end = (nlPos != m_text.npos) ? nlPos : m_text.length();
+
+            m_col += end - m_cursor;
+            m_cursor = end;
 
             continue;
         }
